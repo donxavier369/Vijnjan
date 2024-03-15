@@ -140,7 +140,7 @@ celerybeat.pid
 .env
 .venv
 env/
-env/
+venv/
 ENV/
 env.bak/
 venv.bak/
@@ -169,8 +169,6 @@ dmypy.json
 # Cython debug symbols
 cython_debug/
 
-env/
-
 # PyCharm
 #  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
 #  be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
@@ -179,3 +177,5 @@ env/
 #.idea/
 
 # End of https://www.toptal.com/developers/gitignore/api/django
+
+venv/
