@@ -17,16 +17,21 @@ class RegisterSerializer(serializers.ModelSerializer):
     )
     class Meta:
         model = CustomUser
-        fields = ['email', 'username', 'password']
+        fields = ['email', 'username', 'date_of_birth', 'gender', 'password', 'is_tutor']
+
     def validate(self, attrs):
         email = attrs.get('email', '')
         username = attrs.get('username', '')
-        if not username.isalnum(): # check alphanumeric
-            raise serializers.ValidationError(
-                self.default_error_messages
-            )
-        print("this is attrs:",attrs)
+        date_of_birth = attrs.get('date_of_birth','')
+        gender = attrs.get('gender', '')
+        is_tutor = attrs.get('is_tutor', '')
+
+        # Check if the username contains any invalid characters
+        if any(char in username for char in r'~!@#$%^&*()+=\|{}[]:;"\'<>?,./'):
+            raise serializers.ValidationError("Username cannot contain special characters other than spaces.")
+
         return attrs
+
     
     def create(self, validated_data):
         print(validated_data,"this is the validate data")
@@ -36,7 +41,10 @@ class RegisterSerializer(serializers.ModelSerializer):
         user = CustomUser.objects.create(
             email = validated_data['email'],
             username = validated_data['username'],
-            password = hashed_password
+            date_of_birth = validated_data['date_of_birth'],
+            gender = validated_data['gender'],
+            password = hashed_password,
+            is_tutor = validated_data['is_tutor']
         )
         user.save()
         return user

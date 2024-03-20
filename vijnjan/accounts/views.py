@@ -12,6 +12,7 @@ class RegisterView(generics.GenericAPIView):
     serializer_class = RegisterSerializer
     def post(self,request):
         user = request.data
+        
         serializer = self.serializer_class(data=user)
         if serializer.is_valid():
             serializer.save()
@@ -22,3 +23,4 @@ class RegisterView(generics.GenericAPIView):
 
 class LoginAPIView(TokenObtainPairView):
     serializer_class = LoginSerializer
+
