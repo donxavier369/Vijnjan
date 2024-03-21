@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'accounts',
     'meeting',
+    'courses',
     
 ]
 
