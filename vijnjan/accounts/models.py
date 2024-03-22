@@ -3,7 +3,7 @@ from django.db import models
 from datetime import date
 
 class CustomUser(AbstractUser):
-    username = models.CharField(max_length=150, unique=True)
+    username = models.CharField(max_length=150, unique=False)
     email = models.EmailField(max_length=255, unique=True, db_index=True)
     is_tutor = models.BooleanField(default = False)
     date_of_birth = models.DateField(default = date.today)

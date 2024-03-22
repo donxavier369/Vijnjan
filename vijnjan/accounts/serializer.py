@@ -17,7 +17,7 @@ class RegisterSerializer(serializers.ModelSerializer):
     )
     class Meta:
         model = CustomUser
-        fields = ['email', 'username', 'date_of_birth', 'gender', 'password', 'is_tutor']
+        fields = ['id', 'email', 'username', 'date_of_birth', 'gender', 'password', 'is_tutor']
 
     def validate(self, attrs):
         email = attrs.get('email', '')
@@ -55,7 +55,9 @@ class LoginSerializer(TokenObtainPairSerializer):
     def get_token(cls, user):
         print(user,"user")
         token = super().get_token(user)
+        token['id'] = user.id
         token['superuser'] = user.is_superuser
+        token['tutor'] = user.is_tutor
         token['name'] = user.username
         token['email'] = user.email
         token['is_active'] = user.is_active
