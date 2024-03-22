@@ -43,3 +43,6 @@ class CoursesDeleteAPIView(APIView):
 
         course.delete()
         return Response({"message": "Course deleted successfully"},status=status.HTTP_204_NO_CONTENT)
+    
+# ssh -i "don3.pem" ubuntu@ec2-54-157-52-2.compute-1.amazonaws.com
+# http://54.157.52.2/
