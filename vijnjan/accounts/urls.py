@@ -16,5 +16,9 @@ urlpatterns = [
     path('forgotpassword/<int:user_id>/', views.ForgotPassword.as_view(), name="forgotpassword"),
     path('add_certificate/', AddCertificate.as_view(), name='add_certificate'),
     path('user_profile_update/', UserProfileUpdateView.as_view(), name='user_profile_update'),
+    path('student-profile/<int:user_id>/', StudentProfileListView.as_view(), name='student-profile'),
+    path('tutor-profile/<int:user_id>/', TutorProfileListView.as_view(), name='tutor-profile'),
+
+
 
 ]

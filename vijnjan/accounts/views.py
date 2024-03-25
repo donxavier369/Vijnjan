@@ -1,16 +1,18 @@
 from django.shortcuts import render
 from rest_framework import generics,status
-from .serializers import RegisterSerializer,LoginSerializer,TutorProfileSerializer, UserProfileSerializer
+from .serializers import RegisterSerializer,LoginSerializer,CustomUserSerializer,StudentProfileSerializer,TutorProfileSerializer, UserProfileSerializer
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.views import APIView
-from .models import CustomUser
+from .models import CustomUser,StudentProfile,TutorProfile
 from django.core.mail import send_mail
 import random
 import string
 from django.conf import settings
 from rest_framework.permissions import IsAuthenticated
-
+from django.shortcuts import get_object_or_404
+from courses.serializers import CourseSerializer
+from courses.models import Courses
 
 
 # Create your views here.
@@ -84,3 +86,51 @@ class AddCertificate(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+class StudentProfileListView(APIView):
+    def get(self, request, user_id):
+        user = get_object_or_404(CustomUser, id=user_id)
+        # student = get_object_or_404(StudentProfile, student=user)
+        student = ""
+        try:
+            student = StudentProfile.objects.get(student=user)
+        except:
+            pass
+        if student:
+            serializer_student = StudentProfileSerializer(student)
+            serializer_student = serializer_student.data
+        else:
+            serializer_student = "The student does not have any courses"
+
+        serializer_user = CustomUserSerializer(user)
+        return Response({
+            'student': serializer_student,
+            'user': serializer_user.data
+        }, status=status.HTTP_200_OK)
+  
+        
+class TutorProfileListView(APIView):
+    def get(self, request, user_id):
+        user = get_object_or_404(CustomUser, id=user_id)
+
+        tutor_profiles = TutorProfile.objects.filter(tutor=user)
+
+        if tutor_profiles.exists():
+            serializer_tutor = TutorProfileSerializer(tutor_profiles, many=True).data
+        else:
+            serializer_tutor = "Qualifications not found!"
+
+        try:
+            courses = Courses.objects.filter(tutor=user)
+            serializer_courses = CourseSerializer(courses, many=True).data
+        except Courses.DoesNotExist:
+            serializer_courses = "The tutor does not have any courses"
+
+        serializer_user = CustomUserSerializer(user).data
+
+        return Response({
+            'qualifications': serializer_tutor,
+            'courses': serializer_courses,
+            'user': serializer_user
+        }, status=status.HTTP_200_OK)

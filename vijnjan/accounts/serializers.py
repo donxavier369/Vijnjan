@@ -1,6 +1,6 @@
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework import serializers
-from accounts.models import CustomUser,TutorProfile
+from accounts.models import CustomUser,StudentProfile,TutorProfile
 from rest_framework.validators import UniqueValidator
 from django.contrib.auth.hashers import make_password
 
@@ -77,7 +77,10 @@ class TutorProfileSerializer(serializers.ModelSerializer):
         model = TutorProfile
         fields = ['tutor', 'qualification', 'certificate']  
 
-
+class StudentProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StudentProfile
+        fields = ['student', 'courses']
 
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
