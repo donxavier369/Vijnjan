@@ -6,6 +6,7 @@ class Courses(models.Model):
     description = models.CharField(max_length=255, default="description")
     duration = models.IntegerField(default=1)
     tutor = models.ForeignKey('accounts.CustomUser', on_delete=models.CASCADE)
+    is_trending = models.BooleanField(default=False)
 
 
 
