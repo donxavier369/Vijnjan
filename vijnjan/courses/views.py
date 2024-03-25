@@ -3,7 +3,7 @@ from rest_framework import serializers
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Courses
+from .models import Courses, Modules
 
 
 class CourseCreateAPIView(APIView):
@@ -42,4 +42,57 @@ class CourseDeleteAPIView(APIView):
         return Response({"success": "Course deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
 
+class CourseListAPIView(APIView):
+    def get(self, request):
+        try:
+            courses = Courses.objects.all()
+            # If no courses are found, return an empty list
+            if not courses:
+                return Response({"courses": []}, status=status.HTTP_200_OK)
+            else:
+                # Serialize the courses queryset using the serializer
+                serializer = CourseSerializer(courses, many=True)
+                return Response({"courses": serializer.data}, status=status.HTTP_200_OK)
+        except Exception as e:
+            # Catching generic exception and returning an error response
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class ModuleListAPIView(APIView):
+    def get(self, request, id):
+        try:
+            # Filtering modules by the foreign key 'course'
+            modules = Modules.objects.filter(course=id)
+
+            if not modules:
+                return Response({"modules": []}, status=status.HTTP_200_OK)
+            else:
+                # Using ModuleSerializer to serialize the queryset
+                serializer = ModuleSerializer(modules, many=True)
+                return Response({"modules": serializer.data}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # ssh -i "don3.pem" ubuntu@ec2-54-157-52-2.compute-1.amazonaws.com
+# 54.157.52.2
+# https://documenter.getpostman.com/view/30403691/2sA35A7QNs#b9c42c3b-02c6-4971-b381-d7f0997c98ca

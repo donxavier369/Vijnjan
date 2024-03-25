@@ -10,6 +10,7 @@ class ModuleSerializer(serializers.ModelSerializer):
         model = Modules
         fields = '__all__'  # Include all fields
 
+
 class CourseSerializer(serializers.ModelSerializer):
 
     class Meta:
