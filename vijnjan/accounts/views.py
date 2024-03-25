@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from rest_framework import generics,status
-from .serializer import RegisterSerializer,LoginSerializer
+from .serializers import RegisterSerializer,LoginSerializer
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.views import APIView
@@ -58,7 +58,7 @@ class ForgotPassword(APIView):
                   f'Your new login credentials are as follows:\n\n' \
                   f'Username: {email}\n' \
                   f'password: {temporary_password}\n\n' \
-                  f'Please use this password to access your Vijnajn account.\n\n' \
+                  f'Please use this temporary password to access your Vijnajn account and reset your password immediately after login.\n\n' \
                   f'Best regards,\nTeam Vijnjan'
         from_email = settings.EMAIL_HOST_USER  
 

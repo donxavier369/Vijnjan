@@ -62,3 +62,10 @@ class LoginSerializer(TokenObtainPairSerializer):
         token['email'] = user.email
         token['is_active'] = user.is_active
         return token
+    
+
+
+class CustomUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = ['id', 'username', 'email', 'is_tutor', 'date_of_birth', 'gender']
