@@ -23,6 +23,7 @@ urlpatterns = [
     path('user/', include('accounts.urls')),
     path('meeting/', include('meeting.urls')),
     path('courses/', include('courses.urls')),
+    path('adminapp/', include('adminapp.urls')),
     
 
     
