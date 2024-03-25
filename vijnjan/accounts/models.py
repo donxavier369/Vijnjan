@@ -17,3 +17,12 @@ class CustomUser(AbstractUser):
     def __str__(self) -> str:
         return self.username
     
+class TutorProfile(models.Model):
+    tutor = models.ForeignKey('accounts.CustomUser', on_delete=models.CASCADE)
+    qualification = models.CharField(max_length=100, default='')
+    certificate = models.FileField(upload_to='tutorprofile/pdf')
+
+
+class StudentProfile(models.Model):
+    student = models.ForeignKey('accounts.CustomUser', on_delete=models.CASCADE)
+    courses = models.ForeignKey('courses.Courses', on_delete=models.CASCADE)

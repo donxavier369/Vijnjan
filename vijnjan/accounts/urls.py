@@ -14,4 +14,7 @@ urlpatterns = [
     path('register/',views.RegisterView.as_view(),name="register"),
     path('login/',views.LoginAPIView.as_view(),name="login"),
     path('forgotpassword/<int:user_id>/', views.ForgotPassword.as_view(), name="forgotpassword"),
+    path('add_certificate/', AddCertificate.as_view(), name='add_certificate'),
+    path('user_profile_update/', UserProfileUpdateView.as_view(), name='user_profile_update'),
+
 ]

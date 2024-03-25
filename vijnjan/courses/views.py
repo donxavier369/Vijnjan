@@ -4,6 +4,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from .models import Courses, Modules
+from accounts.models import CustomUser,StudentProfile
 
 
 class CourseCreateAPIView(APIView):
@@ -59,10 +60,15 @@ class CourseListAPIView(APIView):
 
 
 class ModuleListAPIView(APIView):
-    def get(self, request, id):
+    def get(self, request, course_id, user_id): 
+        
+        course = Courses.objects.get(id=course_id)
+        user = CustomUser.objects.get(id=user_id)
+        student = StudentProfile.objects.create(student=user, courses=course)
+        
+
         try:
-            # Filtering modules by the foreign key 'course'
-            modules = Modules.objects.filter(course=id)
+            modules = Modules.objects.filter(course=course_id)
 
             if not modules:
                 return Response({"modules": []}, status=status.HTTP_200_OK)
