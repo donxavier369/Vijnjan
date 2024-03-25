@@ -91,23 +91,23 @@ class AddCertificate(APIView):
 class StudentProfileListView(APIView):
     def get(self, request, user_id):
         user = get_object_or_404(CustomUser, id=user_id)
-        # student = get_object_or_404(StudentProfile, student=user)
-        student = ""
         try:
-            student = StudentProfile.objects.get(student=user)
+            student_profiles = StudentProfile.objects.filter(student=user)
         except:
             pass
-        if student:
-            serializer_student = StudentProfileSerializer(student)
-            serializer_student = serializer_student.data
+
+        if student_profiles.exists():
+            serializer_student = StudentProfileSerializer(student_profiles, many=True).data
         else:
             serializer_student = "The student does not have any courses"
 
-        serializer_user = CustomUserSerializer(user)
+        serializer_user = CustomUserSerializer(user).data
+
         return Response({
             'student': serializer_student,
-            'user': serializer_user.data
+            'user': serializer_user
         }, status=status.HTTP_200_OK)
+
   
         
 class TutorProfileListView(APIView):
