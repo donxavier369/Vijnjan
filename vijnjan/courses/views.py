@@ -64,9 +64,11 @@ class ModuleListAPIView(APIView):
         
         course = Courses.objects.get(id=course_id)
         user = CustomUser.objects.get(id=user_id)
-        student = StudentProfile.objects.create(student=user, courses=course)
+        try:
+            filter_course = StudentProfile.objects.get(student=user, courses=course)
+        except:
+            student = StudentProfile.objects.create(student=user, courses=course) 
         
-
         try:
             modules = Modules.objects.filter(course=course_id)
 
