@@ -47,15 +47,14 @@ class CourseListAPIView(APIView):
     def get(self, request):
         try:
             courses = Courses.objects.all()
-            # If no courses are found, return an empty list
+
             if not courses:
                 return Response({"courses": []}, status=status.HTTP_200_OK)
             else:
-                # Serialize the courses queryset using the serializer
                 serializer = CourseSerializer(courses, many=True)
                 return Response({"courses": serializer.data}, status=status.HTTP_200_OK)
+            
         except Exception as e:
-            # Catching generic exception and returning an error response
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 

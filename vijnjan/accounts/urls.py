@@ -18,7 +18,7 @@ urlpatterns = [
     path('user_profile_update/', UserProfileUpdateView.as_view(), name='user_profile_update'),
     path('student-profile/<int:user_id>/', StudentProfileListView.as_view(), name='student-profile'),
     path('tutor-profile/<int:user_id>/', TutorProfileListView.as_view(), name='tutor-profile'),
-
-
+    path('usersprofilelist/', views.ProfileListView.as_view(),name="ProfileListView"),
+    path('block_user/<int:user_id>/', BlockUserView.as_view(), name='block_user'),
 
 ]

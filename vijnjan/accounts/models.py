@@ -8,6 +8,8 @@ class CustomUser(AbstractUser):
     is_tutor = models.BooleanField(default = False)
     date_of_birth = models.DateField(default = date.today)
     gender = models.CharField(max_length=10, default = '')
+    is_tutor_verify = models.BooleanField(default=False)
+    
 
 
     USERNAME_FIELD = 'email'

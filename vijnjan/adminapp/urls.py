@@ -6,5 +6,4 @@ urlpatterns = [
     path('delete_carousel/<int:id>/', CarouselDeleteView.as_view(), name="delete_carousel"),
     path('list_carousel/', CarouselListView.as_view(), name="list_carousel"),
     path('update_trending/<int:course_id>/', TrendingCourseUpdateView.as_view(), name='update-trending'),
-
 ]
