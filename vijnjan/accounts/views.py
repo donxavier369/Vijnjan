@@ -197,3 +197,10 @@ class ProfileListView(APIView):
             })
 
         return Response(user_data, status=status.HTTP_200_OK)
+    
+class VerifyTutor(APIView):
+    def patch(self, request, tutor_id):  
+        tutor = CustomUser.objects.get(id=tutor_id)
+        tutor.is_tutor_verify = True
+        tutor.save()
+        return Response({"message": f"Tutor {tutor.username} has been verified."}, status=status.HTTP_200_OK)
