@@ -9,6 +9,8 @@ urlpatterns = [
     path('deletecourse/<int:pk>/', CourseDeleteAPIView.as_view(), name='deletecourse'),
     path('listcourses/', views.CourseListAPIView.as_view(), name="listcourses"),
     path('listmodules/<int:course_id>/<int:user_id>/', views.ModuleListAPIView.as_view(), name="listmodules"),
+    path('list_trending_courses/', views.TrendingCourseListAPIView.as_view(), name="lis_trending_tcourses"),
+
 ]
 
 

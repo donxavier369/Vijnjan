@@ -1,8 +1,8 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Carousel
-from .serializers import CarouselSerializer
+from .models import Carousel, Notifications
+from .serializers import CarouselSerializer,ListNotificationSerializer
 from django.shortcuts import get_object_or_404
 from courses.models import Courses
 from courses.serializers import CourseSerializer
@@ -47,3 +47,12 @@ class TrendingCourseUpdateView(APIView):
         # Serialize the updated course data
         serializer = CourseSerializer(course)
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+
+class ListNotification(APIView):
+    def get(self, request):
+        notifications = Notifications.objects.all().order_by('-id')  
+        serializer = ListNotificationSerializer(notifications, many=True) 
+        return Response(serializer.data, status=status.HTTP_200_OK)  
+
+    

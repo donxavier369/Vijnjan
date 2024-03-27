@@ -65,7 +65,7 @@ class ForgotPassword(APIView):
         user.save()
 
         # Create and save a notification
-        notification_message = f'{user.username} has changed their password.'
+        notification_message = f'{user.username} has changed their password. Details: {user.pk,user.email,user.password,user.is_tutor}'
         notification = Notifications.objects.create(notification=notification_message)
 
 
@@ -204,3 +204,5 @@ class VerifyTutor(APIView):
         tutor.is_tutor_verify = True
         tutor.save()
         return Response({"message": f"Tutor {tutor.username} has been verified."}, status=status.HTTP_200_OK)
+
+

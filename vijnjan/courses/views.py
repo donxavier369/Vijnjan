@@ -82,12 +82,19 @@ class ModuleListAPIView(APIView):
 
 
 
+class TrendingCourseListAPIView(APIView):
+    def get(self, request):
+        try:
+            courses = Courses.objects.filter(is_trending = True)
 
-
-
-
-
-
+            if not courses:
+                return Response({"courses": []}, status=status.HTTP_200_OK)
+            else:
+                serializer = CourseSerializer(courses, many=True)
+                return Response({"courses": serializer.data}, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 
