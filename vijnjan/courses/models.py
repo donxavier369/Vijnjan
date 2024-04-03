@@ -3,6 +3,9 @@ from django.core.exceptions import ValidationError
 from PIL import Image
 # Create your models here.
 
+class Categories(models.Model):
+    category_name = models.CharField(max_length=100)
+
 def validate_thumbnail_size(value):
     # Opening the image
     img = Image.open(value)
@@ -18,6 +21,8 @@ class Courses(models.Model):
     duration = models.IntegerField(default=1)
     tutor = models.ForeignKey('accounts.CustomUser', on_delete=models.CASCADE)
     is_trending = models.BooleanField(default=False)
+    category = models.ForeignKey(Categories, on_delete=models.CASCADE)
+    
 
 
 

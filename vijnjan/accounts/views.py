@@ -91,15 +91,27 @@ class BlockUserView(APIView):
         user.save()
         return Response({"message": f"User {user.username} has been blocked."}, status=status.HTTP_200_OK)
 
-class UserProfileUpdateView(generics.UpdateAPIView):
-    queryset = CustomUser.objects.all()
-    serializer_class = UserProfileSerializer
+
+class SampleView(APIView):
     permission_classes = [IsAuthenticated]
-
-    def get_object(self):
-        return self.request.user
+    
 
 
+class UserProfileUpdateView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def patch(self, request, user_id, *args, **kwargs):
+        print(request.headers,"ooooooooooooo")
+        # user = self.request.user
+        user = CustomUser.objects.get(pk=user_id)
+        serializer = UserProfileSerializer(user, data=request.data, partial=True)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
 class AddCertificate(APIView):
     def post(self, request, *args, **kwargs):
         serializer = TutorProfileSerializer(data=request.data)

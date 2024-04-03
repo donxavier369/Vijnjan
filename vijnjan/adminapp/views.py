@@ -4,8 +4,8 @@ from rest_framework import status
 from .models import Carousel, Notifications
 from .serializers import CarouselSerializer,ListNotificationSerializer
 from django.shortcuts import get_object_or_404
-from courses.models import Courses
-from courses.serializers import CourseSerializer
+from courses.models import Courses, Categories
+from courses.serializers import CourseSerializer,CategorySerializer
 
 
 class CarouselUploadView(APIView):
@@ -56,3 +56,30 @@ class ListNotification(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)  
 
     
+class CreateCourseCategory(APIView):
+     def post(self, request, *args, **kwargs):
+        serializer = CategorySerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+class ListCourseCategory(APIView):
+    def get(self, request):
+        categories = Categories.objects.all()
+        serializer = CategorySerializer(categories, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+class DeleteCourseCategory(APIView):
+    def delete(self, request, category_id):
+        try:
+            category = Categories.objects.get(pk=category_id)
+            category.delete()
+            return Response({"message": "Category deleted successfully"}, status=status.HTTP_200_OK)
+        except Categories.DoesNotExist:
+            return Response({"error": "Category not found"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+     
+            

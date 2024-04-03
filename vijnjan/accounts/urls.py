@@ -22,5 +22,7 @@ urlpatterns = [
     path('block_user/<int:user_id>/', BlockUserView.as_view(), name='block_user'),
     path('verify_tutor/<int:tutor_id>/', VerifyTutor.as_view(), name='verify_tutor'),
 
+    path('sample/', views.SampleView.as_view(), name='sample'),
+
 
 ]
