@@ -19,9 +19,11 @@ urlpatterns = [
     path('add_certificate/', AddCertificate.as_view(), name='add_certificate'),
     path('student-profile/<int:user_id>/', StudentProfileListView.as_view(), name='student-profile'),
     path('tutor-profile/<int:user_id>/', TutorProfileListView.as_view(), name='tutor-profile'),
-    path('usersprofilelist/', views.ProfileListView.as_view(),name="ProfileListView"),
+    path('usersprofilelist/', views.ProfileListView.as_view(),name='ProfileListView'),
     path('block_user/<int:user_id>/', BlockUserView.as_view(), name='block_user'),
     path('verify_tutor/<int:tutor_id>/', VerifyTutor.as_view(), name='verify_tutor'),
+    path('add-profile-image/', AddUserProfile.as_view(), name='add_profile_image'),
+    path('remove-profile-image/',  DeleteUserProfile.as_view(), name='remove-profile-image'),
     path('logout/', UserLogoutView.as_view(), name='logout'),
     path('token/refresh/', TokenRefreshAPIView.as_view(), name='token_refresh'),
 

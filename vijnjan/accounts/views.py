@@ -268,7 +268,49 @@ class ChangePasswordView(APIView):
         user.save()
 
         return Response({'success': 'Password changed successfully.'})
-    
+
+
+class AddUserProfile(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        data = request.data
+        profile_image = data.get('profile_image')
+
+        try:
+            queryset = CustomUser.objects.get(id=user.id)
+        except CustomUser.DoesNotExist:
+            return Response({'error': 'User profile not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        if queryset and profile_image:
+            custom_user = queryset
+            custom_user.profile_image = profile_image
+            custom_user.save()
+            return Response({'success': 'Profile image added successfully.'})
+        else:
+            return Response({'failure': 'Either user profile not found or profile image not provided.'}, status=status.HTTP_400_BAD_REQUEST)
+
+class DeleteUserProfile(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self,request):
+        user = request.user
+
+        try:
+            queryset = CustomUser.objects.get(id=user.id)
+        except CustomUser.DoesNotExist:
+            return Response({'error': 'User profile not found.'}, status=status.HTTP_404_NOT_FOUND)
+        
+        if queryset:
+            queryset.profile_image.delete()
+            return Response({'success': 'Profile image deleted successfully.'})
+        else:
+            return Response({'failure': 'user not found'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
 
 class UserLogoutView(APIView):
     def post(self, request, *args, **kwargs):

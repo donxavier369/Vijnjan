@@ -4,6 +4,7 @@ from accounts.models import CustomUser,StudentProfile,TutorProfile
 from rest_framework.validators import UniqueValidator
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.password_validation import validate_password
+from django.contrib.auth import authenticate
 
 
 
@@ -60,25 +61,13 @@ class RegisterSerializer(serializers.ModelSerializer):
         return user
     
 
-class LoginSerializer(TokenObtainPairSerializer):
-    @classmethod
-    def get_token(cls, user):
-        print(user,"user")
-        token = super().get_token(user)
-        token['id'] = user.id
-        token['superuser'] = user.is_superuser
-        token['tutor'] = user.is_tutor
-        token['name'] = user.username
-        token['email'] = user.email
-        token['is_active'] = user.is_active
-        return token
-    
+
 
 
 class CustomUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ['id', 'username', 'email', 'is_tutor', 'date_of_birth', 'gender']
+        fields = ['id', 'username', 'email', 'profile_image', 'is_tutor', 'date_of_birth', 'gender', 'is_tutor_verify']
 
 
 class TutorProfileSerializer(serializers.ModelSerializer):
@@ -97,7 +86,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
         fields = ['id', 'email', 'username', 'date_of_birth', 'gender', 'is_tutor']
 
 
-from django.contrib.auth import authenticate
 
 class UserLoginSerializer(serializers.Serializer):
     username = serializers.CharField()
