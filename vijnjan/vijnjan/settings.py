@@ -43,9 +43,10 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'rest_framework.authtoken',
+    # 'rest_framework.authtoken',
     'rest_framework_simplejwt',
-    'corsheaders',
+    'rest_framework_simplejwt.token_blacklist',
+    # 'corsheaders',
     'accounts',
     'meeting',
     'courses',
@@ -53,16 +54,28 @@ INSTALLED_APPS = [
     
 ]
 
+# MIDDLEWARE = [
+#     'django.middleware.security.SecurityMiddleware',
+#     'corsheaders.middleware.CorsMiddleware', 
+#     'django.middleware.common.CommonMiddleware',
+#     'django.middleware.csrf.CsrfViewMiddleware',
+#     'django.contrib.sessions.middleware.SessionMiddleware',
+#     'django.contrib.auth.middleware.AuthenticationMiddleware',
+#     'django.contrib.messages.middleware.MessageMiddleware',
+#     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+# ]
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'corsheaders.middleware.CorsMiddleware', 
+    'corsheaders.middleware.CorsMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
 
 
 ROOT_URLCONF = 'vijnjan.urls'
@@ -159,36 +172,39 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'accounts.CustomUser'
 
-# REST_FRAMEWORK = {
-#     'DEFAULT_AUTHENTICATION_CLASSES': (
-#         'rest_framework_simplejwt.authentication.JWTAuthentication',
-#     )
-# }
-
-REST_FRAMEWORK = {  
-    'DEFAULT_PERMISSION_CLASSES': [     
-        'rest_framework.permissions.IsAuthenticated', 
-    ], 
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.TokenAuthentication', 
-    ], 
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-         'rest_framework_simplejwt.authentication.JWTAuthentication',
-     )
-} 
 
 REST_FRAMEWORK = {
-    'DEFAULT_PARSER_CLASSES': [
-        'rest_framework.parsers.JSONParser',
-        'rest_framework.parsers.FormParser',
-        'rest_framework.parsers.MultiPartParser',  # Add this line
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
 }
 
+# REST_FRAMEWORK = {  
+#     'DEFAULT_PERMISSION_CLASSES': [     
+#         'rest_framework.permissions.IsAuthenticated', 
+#     ], 
+#     'DEFAULT_AUTHENTICATION_CLASSES': [
+#         'rest_framework.authentication.TokenAuthentication', 
+#     ], 
+#     'DEFAULT_AUTHENTICATION_CLASSES': (
+#          'rest_framework_simplejwt.authentication.JWTAuthentication',
+#      )
+# } 
+
+# REST_FRAMEWORK = {
+#     'DEFAULT_PARSER_CLASSES': [
+#         'rest_framework.parsers.JSONParser',
+#         'rest_framework.parsers.FormParser',
+#         'rest_framework.parsers.MultiPartParser', 
+#     ],
+# }
+
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': datetime.timedelta(minutes=100),
+    'ACCESS_TOKEN_LIFETIME': datetime.timedelta(minutes=15),
     'REFRESH_TOKEN_LIFETIME': datetime.timedelta(days=1),
 }
+
+
 
 CORS_ALLOW_ALL_ORIGINS = True
 

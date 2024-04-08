@@ -12,17 +12,17 @@ app_name = 'api'
 
 urlpatterns = [
     path('register/',views.RegisterView.as_view(),name="register"),
-    path('login/',views.LoginAPIView.as_view(),name="login"),
+    path('login/', UserLoginView.as_view(), name='login'),
+    path('edit-profile/<int:pk>/', UserProfileEditView.as_view(), name='edit-profile'),
+    path('change-password/', ChangePasswordView.as_view(), name='change_password'),
     path('forgotpassword/<int:user_id>/', views.ForgotPassword.as_view(), name="forgotpassword"),
     path('add_certificate/', AddCertificate.as_view(), name='add_certificate'),
-    path('user_profile_update/', UserProfileUpdateView.as_view(), name='user_profile_update'),
     path('student-profile/<int:user_id>/', StudentProfileListView.as_view(), name='student-profile'),
     path('tutor-profile/<int:user_id>/', TutorProfileListView.as_view(), name='tutor-profile'),
     path('usersprofilelist/', views.ProfileListView.as_view(),name="ProfileListView"),
     path('block_user/<int:user_id>/', BlockUserView.as_view(), name='block_user'),
     path('verify_tutor/<int:tutor_id>/', VerifyTutor.as_view(), name='verify_tutor'),
-
-    path('sample/', views.SampleView.as_view(), name='sample'),
-
+    path('logout/', UserLogoutView.as_view(), name='logout'),
+    path('token/refresh/', TokenRefreshAPIView.as_view(), name='token_refresh'),
 
 ]

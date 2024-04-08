@@ -3,22 +3,31 @@ from rest_framework import serializers
 from accounts.models import CustomUser,StudentProfile,TutorProfile
 from rest_framework.validators import UniqueValidator
 from django.contrib.auth.hashers import make_password
+from django.contrib.auth.password_validation import validate_password
+
 
 
 
 class RegisterSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(max_length=68, min_length=6, write_only = True)#used for input (registration) but not included in the response.write_only
+    password = serializers.CharField(max_length=68, min_length=6, write_only=True)
+
     username = serializers.CharField(
         required=True,
         validators=[UniqueValidator(queryset=CustomUser.objects.all(), message="Username already exists.")]
     )
+
     email = serializers.EmailField(
         required=True,
         validators=[UniqueValidator(queryset=CustomUser.objects.all(), message="Email already exists.")]
     )
+
     class Meta:
         model = CustomUser
         fields = ['id', 'email', 'username', 'date_of_birth', 'gender', 'password', 'is_tutor']
+
+    def validate_password(self, value):
+        validate_password(value) 
+        return value
 
     def validate(self, attrs):
         email = attrs.get('email', '')
@@ -86,3 +95,28 @@ class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = ['id', 'email', 'username', 'date_of_birth', 'gender', 'is_tutor']
+
+
+from django.contrib.auth import authenticate
+
+class UserLoginSerializer(serializers.Serializer):
+    username = serializers.CharField()
+    password = serializers.CharField(write_only=True)
+
+    def validate(self, data):
+        username = data.get('username')
+        password = data.get('password')
+
+        if username and password:
+            user = authenticate(username=username, password=password)
+            if user:
+                if user.is_active:
+                    data['user'] = user
+                else:
+                    raise serializers.ValidationError("User account is disabled.")
+            else:
+                raise serializers.ValidationError("Unable to login with provided credentials.")
+        else:
+            raise serializers.ValidationError("Must provide username and password.")
+
+        return data

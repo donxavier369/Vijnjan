@@ -11,8 +11,8 @@ def validate_thumbnail_size(value):
     img = Image.open(value)
 
     # Checking the file size
-    if value.size > 20 * 1024:  # 20KB
-        raise ValidationError("Image file size cannot exceed 20KB.")
+    if value.size > 1000 * 1024:  # 20KB
+        raise ValidationError("Image file size cannot exceed 1MB.")
 
 class Courses(models.Model):
     name = models.CharField(max_length=50)
@@ -23,7 +23,6 @@ class Courses(models.Model):
     is_trending = models.BooleanField(default=False)
     category = models.ForeignKey(Categories, on_delete=models.CASCADE)
     
-
 
 
 class Modules(models.Model):

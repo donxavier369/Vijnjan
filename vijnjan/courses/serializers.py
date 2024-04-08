@@ -15,7 +15,7 @@ class CourseSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Courses
-        fields = ('id', 'name', 'description', 'thumbnail', 'duration', 'tutor')
+        fields = ('id', 'name', 'description', 'thumbnail', 'duration', 'tutor', 'category')
 
         # Validate duration to be positive
         extra_kwargs = {'duration': {'validators': [MinValueValidator(1)]}}

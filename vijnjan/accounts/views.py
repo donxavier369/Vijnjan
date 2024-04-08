@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from rest_framework import generics,status
-from .serializers import RegisterSerializer,LoginSerializer,CustomUserSerializer,StudentProfileSerializer,TutorProfileSerializer, UserProfileSerializer
+from .serializers import *
+from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.views import APIView
@@ -14,6 +15,11 @@ from django.shortcuts import get_object_or_404
 from courses.serializers import CourseSerializer
 from courses.models import Courses
 from adminapp.models import Notifications
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
+from rest_framework_simplejwt.token_blacklist.models import OutstandingToken
+from rest_framework_simplejwt.views import TokenRefreshView
+
 
 # Create your views here.
 
@@ -42,8 +48,23 @@ class RegisterView(generics.GenericAPIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
 
-class LoginAPIView(TokenObtainPairView):
-    serializer_class = LoginSerializer
+
+
+class UserLoginView(generics.CreateAPIView):
+    serializer_class = UserLoginSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data['user']
+
+        refresh = RefreshToken.for_user(user)
+
+        return Response({
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+        })
+
 
 
 def generate_random_password(length=10):
@@ -89,12 +110,7 @@ class BlockUserView(APIView):
         user = get_object_or_404(CustomUser, id=user_id)
         user.is_active = False
         user.save()
-        return Response({"message": f"User {user.username} has been blocked."}, status=status.HTTP_200_OK)
-
-
-class SampleView(APIView):
-    permission_classes = [IsAuthenticated]
-    
+        return Response({"message": f"User {user.username} has been blocked."}, status=status.HTTP_200_OK)   
 
 
 class UserProfileUpdateView(APIView):
@@ -218,3 +234,52 @@ class VerifyTutor(APIView):
         return Response({"message": f"Tutor {tutor.username} has been verified."}, status=status.HTTP_200_OK)
 
 
+class UserProfileEditView(generics.UpdateAPIView):
+    serializer_class = UserProfileSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return CustomUser.objects.filter(pk=self.request.user.id)
+
+
+
+class ChangePasswordView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        data = request.data
+        old_password = data.get('old_password')
+        new_password = data.get('new_password')
+
+        if not old_password or not new_password:
+            return Response({'error': 'Both old_password and new_password are required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not user.check_password(old_password):
+            return Response({'error': 'Invalid old password.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Perform password validation
+        try:
+            validate_password(new_password, user=user)
+        except ValidationError as e:
+            return Response({'error': e.messages}, status=status.HTTP_400_BAD_REQUEST)
+
+        user.set_password(new_password)
+        user.save()
+
+        return Response({'success': 'Password changed successfully.'})
+    
+
+class UserLogoutView(APIView):
+    def post(self, request, *args, **kwargs):
+        try:
+            refresh_token = request.data['refresh']
+            token = RefreshToken(refresh_token)
+            OutstandingToken.objects.filter(token=refresh_token).delete()  # Invalidate refresh token
+            return Response({"detail": "Successfully logged out."}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"detail": "Invalid or missing token.", "error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
+
+class TokenRefreshAPIView(TokenRefreshView):
+    pass
