@@ -1,0 +1,4 @@
+ssh -i "don3.pem" ubuntu@ec2-54-157-52-2.compute-1.amazonaws.com
+54.157.52.2
+https://documenter.getpostman.com/view/30403691/2sA35A7QNs#b9c42c3b-02c6-4971-b381-d7f0997c98ca
+https://www.figma.com/file/kaqrFJvZkVGnG5JitPMDqP/Vijnjan-app?type=design&node-id=0%3A1&mode=design&t=I4FyQa5vuzusOwoZ-1

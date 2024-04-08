@@ -37,7 +37,7 @@ class CourseDeleteAPIView(APIView):
         except Courses.DoesNotExist:
             return Response({"error": "Course does not exist"}, status=status.HTTP_404_NOT_FOUND)
         
-        # Delete the course
+        
         course.delete()
         
         return Response({"success": "Course deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
@@ -99,14 +99,3 @@ class TrendingCourseListAPIView(APIView):
 
 
 
-
-
-
-
-
-
-
-
-# ssh -i "don3.pem" ubuntu@ec2-54-157-52-2.compute-1.amazonaws.com
-# 54.157.52.2
-# https://documenter.getpostman.com/view/30403691/2sA35A7QNs#b9c42c3b-02c6-4971-b381-d7f0997c98ca
