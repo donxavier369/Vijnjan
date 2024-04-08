@@ -12,7 +12,8 @@ app_name = 'api'
 
 urlpatterns = [
     path('register/',views.RegisterView.as_view(),name="register"),
-    path('login/', UserLoginView.as_view(), name='login'),
+    path('person-login/', PersonLoginView.as_view(), name='person-login'),
+    path('tutor-login/', TutorLoginView.as_view(), name='tutor-login'),
     path('edit-profile/<int:pk>/', UserProfileEditView.as_view(), name='edit-profile'),
     path('change-password/', ChangePasswordView.as_view(), name='change_password'),
     path('forgotpassword/<int:user_id>/', views.ForgotPassword.as_view(), name="forgotpassword"),
