@@ -6,29 +6,41 @@ from rest_framework import status
 from .models import Courses, Modules, Categories
 from accounts.models import CustomUser,StudentProfile
 from django.shortcuts import get_object_or_404
+from rest_framework.permissions import IsAuthenticated
 
 
 
 class CourseCreateAPIView(APIView):
+    permission_classes = [IsAuthenticated]
     def post(self, request):
+        print(request.user.id)
         serializer = CourseSerializer(data=request.data)
-        if serializer.is_valid():
-            course = serializer.save()
-
-            # Create associated modules
-            request_modules = request.data.get('modules', [])
-            for module_data in request_modules:
-                module_data['course'] = course.id
-                module_serializer = ModuleSerializer(data=module_data)
-                if module_serializer.is_valid():
-                    module_serializer.save(course=course)
-                else:
-                    course.delete()  # Delete the created course if module creation fails
-                    return Response({"error": "Failed to create module", "details": module_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-
-            return Response({"success": "Course created successfully", "course": serializer.data}, status=status.HTTP_201_CREATED)
+        try:
+            tutor = CustomUser.objects.get(id=request.user.id)
+        except:
+            pass
+        if tutor.is_tutor != True:
+            return Response({"error": "Given user is not a tutor"}, status=status.HTTP_400_BAD_REQUEST)
+        elif tutor.is_tutor_verify !=True:
+            return Response({"error": "The tutor not verified by admin"}, status=status.HTTP_400_BAD_REQUEST)
         else:
-            return Response({"error": "Failed to create course", "details": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            if serializer.is_valid():
+                course = serializer.save(tutor=tutor)
+
+                # Create associated modules
+                request_modules = request.data.get('modules', [])
+                for module_data in request_modules:
+                    module_data['course'] = course.id
+                    module_serializer = ModuleSerializer(data=module_data)
+                    if module_serializer.is_valid():
+                        module_serializer.save(course=course)
+                    else:
+                        course.delete()  # Delete the created course if module creation fails
+                        return Response({"error": "Failed to create module", "details": module_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+                return Response({"success": "Course created successfully", "course": serializer.data}, status=status.HTTP_201_CREATED)
+            else:
+                return Response({"error": "Failed to create course", "details": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class CourseDeleteAPIView(APIView):

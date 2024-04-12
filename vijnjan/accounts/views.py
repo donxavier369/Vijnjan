@@ -272,82 +272,7 @@ class ProfileListView(APIView):
 
         return Response(user_data, status=status.HTTP_200_OK)
 
-# class ProfileListView(APIView):
-#     def get(self, request):
-        
-#         users = CustomUser.objects.all()
-        
-#         user_data = []
-#         for user in users:
-#             # Retrieve tutor profiles for each user
-#             print(user.id,"userrrrrrrrrrrrr")
-#             tutor_profiles = TutorProfile.objects.filter(tutor=user)
-#             if tutor_profiles.exists():
-#                 serializer_tutor = TutorProfileSerializer(tutor_profiles, many=True).data
-#             else:
-#                 serializer_tutor = "Qualifications not found!"
 
-#             # Retrieve student profiles for each user
-#             student_profiles = StudentProfile.objects.filter(student=user)
-#             if student_profiles.exists():
-#                 serializer_student = StudentProfileSerializer(student_profiles, many=True).data
-#             else:
-#                 serializer_student = "The student does not have any courses"
-
-#             # Retrieve courses for each user
-#             courses = Courses.objects.filter(tutor=user)
-#             try:
-#                 serializer_courses = CourseSerializer(courses, many=True).data
-#             except Courses.DoesNotExist:
-#                 serializer_courses = "The tutor does not have any courses"
-
-#             # Serialize the user
-#             serializer_user = CustomUserSerializer(user).data
-
-#             # Add user data to the list
-#             if tutor_profiles.exists():
-#                 user_data.append({
-#                 'user': serializer_user,
-#                 'tutor_profiles': serializer_tutor,
-#                 })
-#             elif student_profiles.exists():
-#                 user_data.append({
-#                 'user': serializer_user,
-#                 'student_profiles': serializer_student,
-#                 'courses': serializer_courses
-#                 })
-#             else:
-#                 return Response({"error":"users not found"}, status=status.HTTP_404_NOT_FOUND)
-#         return Response(user_data, status=status.HTTP_200_OK)
-    
-# class ProfileListView(APIView):
-#     def get(self, request):
-#         users = CustomUser.objects.all().prefetch_related('tutorprofile_set', 'studentprofile_set', 'courses_set')
-#         user_data = []
-#         for user in users:
-#             serializer_user = CustomUserSerializer(user).data
-#             tutor_profiles = user.tutorprofile_set.all()
-#             student_profiles = user.studentprofile_set.all()
-#             courses = user.courses_set.all()
-
-#             if tutor_profiles:
-#                 serializer_tutor = TutorProfileSerializer(tutor_profiles, many=True).data
-#                 user_data.append({
-#                     'user': serializer_user,
-#                     'tutor_profiles': serializer_tutor,
-#                 })
-#             elif student_profiles:
-#                 serializer_student = StudentProfileSerializer(student_profiles, many=True).data
-#                 serializer_courses = CourseSerializer(courses, many=True).data
-#                 user_data.append({
-#                     'user': serializer_user,
-#                     'student_profiles': serializer_student,
-#                     'courses': serializer_courses
-#                 })
-        
-#         if not user_data:
-#             return Response({"error": "No users found"}, status=status.HTTP_404_NOT_FOUND)
-#         return Response(user_data, status=status.HTTP_200_OK)
 
 class VerifyTutor(APIView):
     def patch(self, request, tutor_id):  
@@ -357,12 +282,20 @@ class VerifyTutor(APIView):
         return Response({"message": f"Tutor {tutor.username} has been verified."}, status=status.HTTP_200_OK)
 
 
-class UserProfileEditView(generics.UpdateAPIView):
+class UserProfileEditView(APIView):
     serializer_class = UserProfileSerializer
     permission_classes = [IsAuthenticated]
 
-    def get_queryset(self):
-        return CustomUser.objects.filter(pk=self.request.user.id)
+    def get_object(self):
+        return get_object_or_404(CustomUser, pk=self.request.user.id)
+
+    def put(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.serializer_class(instance, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"success":serializer.data},status=status.HTTP_200_OK)
+        return Response({"error":serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 

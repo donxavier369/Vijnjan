@@ -26,14 +26,18 @@ class MeetingApiView(APIView):
     serializer_class = MeetingSerializer
     permission_classes = [IsAuthenticated]
     
-
     def post(self, request):
         meeting_data = request.data
         serializer = self.serializer_class(data=meeting_data)
-        user = get_object_or_404(CustomUser, id=request.user.id)
         
-        if user.id != int(meeting_data['tutor']):
-            return Response({"error": "You are not authorized to create a meeting for this tutor"}, status=status.HTTP_403_FORBIDDEN)
+        try:
+            tutor = CustomUser.objects.get(id=request.user.id)
+        except CustomUser.DoesNotExist:
+            return Response({"error": "Tutor not found"})
+        if tutor.is_tutor != True:
+            return Response({"error": "Given user is not a tutor"}, status=status.HTTP_400_BAD_REQUEST)
+        elif tutor.is_tutor_verify !=True:
+            return Response({"error": "The tutor not verified by admin"}, status=status.HTTP_400_BAD_REQUEST)
         else:
             if serializer.is_valid():
                 serializer.save()
