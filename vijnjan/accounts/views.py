@@ -147,10 +147,13 @@ class ForgotPassword(APIView):
 
 class BlockUserView(APIView):
     def post(self, request, user_id):
-        user = get_object_or_404(CustomUser, id=user_id)
+        try:
+            user = CustomUser.objects.get(id=user_id)
+        except:
+            return Response({"error":"User not found"}, status=status.HTTP_404_NOT_FOUND)
         user.is_active = False
         user.save()
-        return Response({"message": f"User {user.username} has been blocked."}, status=status.HTTP_200_OK)   
+        return Response({"success": f"User {user.username} has been blocked."}, status=status.HTTP_200_OK)   
 
 
 class UserProfileUpdateView(APIView):
