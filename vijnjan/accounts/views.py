@@ -177,7 +177,7 @@ class AddCertificate(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 
-class StudentProfileListView(APIView):
+class StudentProfileView(APIView):
     def get(self, request, user_id):
         user = get_object_or_404(CustomUser, id=user_id)
         try:
@@ -200,7 +200,7 @@ class StudentProfileListView(APIView):
 
   
         
-class TutorProfileListView(APIView):
+class TutorProfileView(APIView):
     def get(self, request, user_id):
         user = get_object_or_404(CustomUser, id=user_id)
 

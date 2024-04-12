@@ -13,9 +13,9 @@ class CarouselUploadView(APIView):
         serializer = CarouselSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response({"success":"carousel successfully added"},serializer.data, status=status.HTTP_201_CREATED)
+            return Response({"success":"carousel successfully added","data":serializer.data}, status=status.HTTP_201_CREATED)
         else:
-            return Response({"error":"unable to add carousel"},serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error":"unable to add carousel","error":serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class CarouselDeleteView(APIView):
