@@ -69,11 +69,24 @@ class ListNotification(APIView):
 class CreateCourseCategory(APIView):
      def post(self, request, *args, **kwargs):
         serializer = CategorySerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({"success":serializer.data}, status=status.HTTP_201_CREATED)
-        else:
-            return Response({"error":serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            # Check if the category already exists
+            queryset = Categories.objects.filter(category_name=request.data['category_name'])
+            if queryset.exists():
+                return Response({"info": f"{request.data['category_name']} category already exists"})
+            else:
+                if serializer.is_valid():
+                    serializer.save()
+                    return Response({"success": serializer.data}, status=status.HTTP_201_CREATED)
+                else:
+                    return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        except KeyError:
+            # Handle the case when 'category_name' is not found in request data
+            return Response({"error": "Category name not provided"}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            # Handle any other unexpected exceptions
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
         
 class ListCourseCategory(APIView):
     def get(self, request):
