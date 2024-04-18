@@ -18,7 +18,7 @@ class CourseCreateAPIView(APIView):
         try:
             tutor = CustomUser.objects.get(id=request.user.id)
         except:
-            pass
+            return Response({'success':False,'message':'Tutor not found'}, status=status.HTTP_404_NOT_FOUND)
         if tutor.person == 'tutor':
             return Response({"success":False,"message": "Given user is not a tutor"}, status=status.HTTP_400_BAD_REQUEST)
         elif tutor.is_tutor_verify !=True:

@@ -11,6 +11,7 @@ from rest_framework import generics,status
 from accounts.serializers import UserLoginSerializer,CustomUserSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.exceptions import NotFound
 
 
 
@@ -52,11 +53,18 @@ class CarouselUploadView(APIView):
 
     def post(self, request, *args, **kwargs):
         serializer = CarouselSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({"success":True,"message":"carousel successfully added","data":serializer.data}, status=status.HTTP_201_CREATED)
+        try:
+            admin = CustomUser.objects.get(id=request.user.id)
+        except CustomUser.DoesNotExist:
+            return Response({'success':False,'message':'Admin not found'}, status=status.HTTP_404_NOT_FOUND)
+        if not admin.is_superuser:
+            return Response({"success":False,"message": "Given user is not an admin"}, status=status.HTTP_400_BAD_REQUEST)
         else:
-            return Response({"success":False,"message":"unable to add carousel","error":serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            if serializer.is_valid():    
+                serializer.save()
+                return Response({"success":True,"message":"carousel successfully added","data":serializer.data}, status=status.HTTP_201_CREATED)
+            else:
+                return Response({"success":False,"message":"unable to add carousel","error":serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class CarouselDeleteView(APIView):
@@ -64,11 +72,18 @@ class CarouselDeleteView(APIView):
 
     def delete(self, request, id):
         try:
-            carousel = Carousel.objects.get(id=id)
-            carousel.delete()
-            return Response({"success":True,"message":"carousel deleted successfully"},status=status.HTTP_204_NO_CONTENT)
-        except Carousel.DoesNotExist:
-            return Response({"success":True,"message":"carousel not found"}, status=status.HTTP_404_NOT_FOUND)
+            admin = CustomUser.objects.get(id=request.user.id)
+        except CustomUser.DoesNotExist:
+            return Response({'success':False,'message':'Admin not found'}, status=status.HTTP_404_NOT_FOUND)
+        if not admin.is_superuser:
+            return Response({"success":False,"message": "Given user is not an admin"}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            try:
+                carousel = Carousel.objects.get(id=id)
+                carousel.delete()
+                return Response({"success":True,"message":"carousel deleted successfully"},status=status.HTTP_204_NO_CONTENT)
+            except Carousel.DoesNotExist:
+                return Response({"success":True,"message":"carousel not found"}, status=status.HTTP_404_NOT_FOUND)
 
 
 class CarouselListView(APIView):
@@ -87,18 +102,25 @@ class TrendingCourseUpdateView(APIView):
 
     def post(self, request, course_id):
         try:
-            course = Courses.objects.get(pk=course_id)
-        except Courses.DoesNotExist:
-            return Response({"success":False,"message": "Course not found"}, status=status.HTTP_404_NOT_FOUND)
-        
-        # Update the is_trending field based on the request data
-        is_trending = request.data.get('is_trending', False)
-        course.is_trending = is_trending
-        course.save()
+            admin = CustomUser.objects.get(id=request.user.id)
+        except CustomUser.DoesNotExist:
+            return Response({'success':False,'message':'Admin not found'}, status=status.HTTP_404_NOT_FOUND)
+        if not admin.is_superuser:
+            return Response({"success":False,"message": "Given user is not an admin"}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            try:
+                course = Courses.objects.get(pk=course_id)
+            except Courses.DoesNotExist:
+                return Response({"success":False,"message": "Course not found"}, status=status.HTTP_404_NOT_FOUND)
+            
+            # Update the is_trending field based on the request data
+            is_trending = request.data.get('is_trending', False)
+            course.is_trending = is_trending
+            course.save()
 
-        # Serialize the updated course data
-        serializer = CourseSerializer(course)
-        return Response({"success":True,"message":"Course updated successfully","data":serializer.data}, status=status.HTTP_200_OK)
+            # Serialize the updated course data
+            serializer = CourseSerializer(course)
+            return Response({"success":True,"message":"Course updated successfully","data":serializer.data}, status=status.HTTP_200_OK)
     
 
 class ListNotification(APIView):
@@ -118,22 +140,29 @@ class CreateCourseCategory(APIView):
      def post(self, request, *args, **kwargs):
         serializer = CategorySerializer(data=request.data)
         try:
-            # Check if the category already exists
-            queryset = Categories.objects.filter(category_name=request.data['category_name'])
-            if queryset.exists():
-                return Response({"success":False,"message": f"{request.data['category_name']} category already exists"})
-            else:
-                if serializer.is_valid():
-                    serializer.save()
-                    return Response({"success":True,"message":"Category created successfully","data": serializer.data}, status=status.HTTP_201_CREATED)
+            admin = CustomUser.objects.get(id=request.user.id)
+        except CustomUser.DoesNotExist:
+            return Response({'success':False,'message':'Admin not found'}, status=status.HTTP_404_NOT_FOUND)
+        if not admin.is_superuser:
+            return Response({"success":False,"message": "Given user is not an admin"}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            try:
+                # Check if the category already exists
+                queryset = Categories.objects.filter(category_name=request.data['category_name'])
+                if queryset.exists():
+                    return Response({"success":False,"message": f"{request.data['category_name']} category already exists"})
                 else:
-                    return Response({"success":False,"message":"failed to create category","error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-        except KeyError:
-            # Handle the case when 'category_name' is not found in request data
-            return Response({"success":False,"message": "Category name not provided"}, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            # Handle any other unexpected exceptions
-            return Response({"success":False,"message":"Internal server error","error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                    if serializer.is_valid():
+                        serializer.save()
+                        return Response({"success":True,"message":"Category created successfully","data": serializer.data}, status=status.HTTP_201_CREATED)
+                    else:
+                        return Response({"success":False,"message":"failed to create category","error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            except KeyError:
+                # Handle the case when 'category_name' is not found in request data
+                return Response({"success":False,"message": "Category name not provided"}, status=status.HTTP_400_BAD_REQUEST)
+            except Exception as e:
+                # Handle any other unexpected exceptions
+                return Response({"success":False,"message":"Internal server error","error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         
 class ListCourseCategory(APIView):
@@ -150,13 +179,20 @@ class DeleteCourseCategory(APIView):
 
     def delete(self, request, category_id):
         try:
-            category = Categories.objects.get(pk=category_id)
-            category.delete()
-            return Response({"success":True,"message": "Category deleted successfully"}, status=status.HTTP_200_OK)
-        except Categories.DoesNotExist:
-            return Response({"success":False,"message": "Category not found"}, status=status.HTTP_404_NOT_FOUND)
-        except Exception as e:
-            return Response({"success":False,"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            admin = CustomUser.objects.get(id=request.user.id)
+        except CustomUser.DoesNotExist:
+            return Response({'success':False,'message':'Admin not found'}, status=status.HTTP_404_NOT_FOUND)
+        if not admin.is_superuser:
+            return Response({"success":False,"message": "Given user is not an admin"}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            try:
+                category = Categories.objects.get(pk=category_id)
+                category.delete()
+                return Response({"success":True,"message": "Category deleted successfully"}, status=status.HTTP_200_OK)
+            except Categories.DoesNotExist:
+                return Response({"success":False,"message": "Category not found"}, status=status.HTTP_404_NOT_FOUND)
+            except Exception as e:
+                return Response({"success":False,"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
      
             
 class VerifyTutor(APIView):
@@ -164,19 +200,26 @@ class VerifyTutor(APIView):
 
     def patch(self,request, tutor_id):
         try:
-            tutor = CustomUser.objects.get(id=tutor_id)
+            admin = CustomUser.objects.get(id=request.user.id)
         except CustomUser.DoesNotExist:
-            return Response({"success":False,"message":"Tutor not found"}, status=status.HTTP_404_NOT_FOUND)
-        if tutor.person != 'tutor':
-            return Response({"success":False,"message":"This user is not a tutor"}, status=status.HTTP_400_BAD_REQUEST)
-        elif tutor.is_tutor_verify :
-            return Response({"success":False,"message":"This tutor is already verified"}, status=status.HTTP_200_OK)
+            return Response({'success':False,'message':'Admin not found'}, status=status.HTTP_404_NOT_FOUND)
+        if not admin.is_superuser:
+            return Response({"success":False,"message": "Given user is not an admin"}, status=status.HTTP_400_BAD_REQUEST)
         else:
             try:
-                tutor.is_tutor_verify = True
-                tutor.save()
-                return Response({"success":True,"message":"Tutor verified successfully"}, status=status.HTTP_200_OK)
-            except:
-                return Response({"success":False,"message":"Unable to verify the tutor"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                tutor = CustomUser.objects.get(id=tutor_id)
+            except CustomUser.DoesNotExist:
+                return Response({"success":False,"message":"Tutor not found"}, status=status.HTTP_404_NOT_FOUND)
+            if tutor.person != 'tutor':
+                return Response({"success":False,"message":"This user is not a tutor"}, status=status.HTTP_400_BAD_REQUEST)
+            elif tutor.is_tutor_verify :
+                return Response({"success":False,"message":"This tutor is already verified"}, status=status.HTTP_200_OK)
+            else:
+                try:
+                    tutor.is_tutor_verify = True
+                    tutor.save()
+                    return Response({"success":True,"message":"Tutor verified successfully"}, status=status.HTTP_200_OK)
+                except:
+                    return Response({"success":False,"message":"Unable to verify the tutor"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        
+            
