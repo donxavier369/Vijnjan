@@ -10,6 +10,8 @@ from accounts.models import CustomUser
 from rest_framework import generics,status
 from accounts.serializers import UserLoginSerializer,CustomUserSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.permissions import IsAuthenticated
+
 
 
 class AdminLoginView(APIView):
@@ -46,6 +48,8 @@ class AdminLoginView(APIView):
 
 
 class CarouselUploadView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def post(self, request, *args, **kwargs):
         serializer = CarouselSerializer(data=request.data)
         if serializer.is_valid():
@@ -56,6 +60,8 @@ class CarouselUploadView(APIView):
 
 
 class CarouselDeleteView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def delete(self, request, id):
         try:
             carousel = Carousel.objects.get(id=id)
@@ -77,6 +83,8 @@ class CarouselListView(APIView):
     
 
 class TrendingCourseUpdateView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def post(self, request, course_id):
         try:
             course = Courses.objects.get(pk=course_id)
@@ -94,6 +102,7 @@ class TrendingCourseUpdateView(APIView):
     
 
 class ListNotification(APIView):
+    
     def get(self, request):
         try:
             notifications = Notifications.objects.all().order_by('-id')  
@@ -104,6 +113,8 @@ class ListNotification(APIView):
 
     
 class CreateCourseCategory(APIView):
+     permission_classes = [IsAuthenticated]
+
      def post(self, request, *args, **kwargs):
         serializer = CategorySerializer(data=request.data)
         try:
@@ -135,6 +146,8 @@ class ListCourseCategory(APIView):
             return Response({"success":False,"message":"Internal server error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
 class DeleteCourseCategory(APIView):
+    permission_classes = [IsAuthenticated]
+
     def delete(self, request, category_id):
         try:
             category = Categories.objects.get(pk=category_id)
@@ -147,6 +160,8 @@ class DeleteCourseCategory(APIView):
      
             
 class VerifyTutor(APIView):
+    permission_classes = [IsAuthenticated]
+
     def patch(self,request, tutor_id):
         try:
             tutor = CustomUser.objects.get(id=tutor_id)
