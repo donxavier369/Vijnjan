@@ -60,7 +60,7 @@ class LoginView(APIView):
                 user = CustomUser.objects.get(email=email)
                 if user.person == 'tutor':
                     message = "Logged-in user is a tutor"
-                elif user.person == 'user':
+                elif user.person == 'student':
                     message="Logged-in user is a student"
                 serializer.is_valid(raise_exception=True)
                 user = serializer.validated_data['user']
