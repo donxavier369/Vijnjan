@@ -44,7 +44,7 @@ class AdminLoginView(APIView):
             except CustomUser.DoesNotExist:
                 return Response({'success':False,"message": "User not found"}, status=status.HTTP_404_NOT_FOUND)
         else:
-            return Response({'success':False,"message": "Username field is required"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'success':False,"message": "Email field is required"}, status=status.HTTP_400_BAD_REQUEST)
     
 
 
@@ -83,7 +83,7 @@ class CarouselDeleteView(APIView):
                 carousel.delete()
                 return Response({"success":True,"message":"carousel deleted successfully"},status=status.HTTP_204_NO_CONTENT)
             except Carousel.DoesNotExist:
-                return Response({"success":True,"message":"carousel not found"}, status=status.HTTP_404_NOT_FOUND)
+                return Response({"success":False,"message":"carousel not found"}, status=status.HTTP_404_NOT_FOUND)
 
 
 class CarouselListView(APIView):
