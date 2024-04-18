@@ -5,7 +5,7 @@ from accounts.models import CustomUser
 from courses.models import Courses
 
 class MeetingSerializer(serializers.ModelSerializer):
-    tutor = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.filter(is_tutor=True))
+    tutor = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.filter(person = 'tutor'))
     class Meta:
         model = Meetings
         fields = ['id', 'date', 'time', 'course', 'duration', 'tutor', 'link']

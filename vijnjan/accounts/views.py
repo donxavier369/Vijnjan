@@ -30,81 +30,56 @@ class RegisterView(generics.GenericAPIView):
     
     def post(self, request):
         user_data = request.data
-        is_tutor = user_data.get('is_tutor')
+        person = user_data.get('person')
         
         serializer = self.serializer_class(data=user_data)
         if serializer.is_valid():
             user = serializer.save()
             
-            if is_tutor is not None and is_tutor:  
+            if person is not None and person == 'tutor':  
                 serializer_data = {key: value for key, value in serializer.data.items() if key not in ['id', 'gender', 'is_tutor']}
 
                 notification_message = f"{serializer.data['username']} has registered as a tutor. Please verify the tutor! Details: {serializer_data}"
                 notification = Notifications.objects.create(notification=notification_message)
 
-        
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            print(serializer.errors)
+            return Response({"success":True,"message":"User registered succussfully","data":serializer.data}, status=status.HTTP_201_CREATED)
         else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"success":False,"message":"Bad request","error":serializer.errors},status=status.HTTP_400_BAD_REQUEST)
         
 
-class PersonLoginView(APIView):
+class LoginView(APIView):
     serializer_class = UserLoginSerializer
 
     def post(self, request, *args, **kwargs):
         serializer = UserLoginSerializer(data=request.data)
         username = request.data.get('username', None)
-        
+        message = ""
         if username:
             try:
                 user = CustomUser.objects.get(email=username)
-                if not user.is_tutor:
-                    serializer.is_valid(raise_exception=True)
-                    user = serializer.validated_data['user']
+                if user.person == 'tutor':
+                    message = "Logined user is a tutor"
+                elif user.person == 'user':
+                    message="Logined user is a student"
+                serializer.is_valid(raise_exception=True)
+                user = serializer.validated_data['user']
 
-                    refresh = RefreshToken.for_user(user)
-
-                    return Response({
-                        'success': "person login successfully",
-                        'refresh': str(refresh),
-                        'access': str(refresh.access_token),
-                    }) 
-                else:
-                    return Response({"error": "User is a tutor"}, status=status.HTTP_403_FORBIDDEN)
+                refresh = RefreshToken.for_user(user)
+                user_data = CustomUserSerializer(user).data
+                return Response({
+                    'success': True,
+                    'message':message,
+                    'refresh': str(refresh),
+                    'access': str(refresh.access_token),
+                    'data' : user_data
+                }) 
+   
             except CustomUser.DoesNotExist:
-                return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+                return Response({'success':False,"message": "User not found"}, status=status.HTTP_404_NOT_FOUND)
         else:
-            return Response({"error": "Username field is required"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'success':False,"message": "Username field is required"}, status=status.HTTP_400_BAD_REQUEST)
     
-class TutorLoginView(generics.CreateAPIView):
-    serializer_class = UserLoginSerializer
-
-    def post(self, request, *args, **kwargs):
-        serializer = UserLoginSerializer(data=request.data)
-        username = request.data.get('username', None)
-        
-        if username:
-            try:
-                user = CustomUser.objects.get(email=username)
-                if user.is_tutor:
-                    serializer.is_valid(raise_exception=True)
-                    user = serializer.validated_data['user']
-
-                    refresh = RefreshToken.for_user(user)
-
-                    return Response({
-                        'success': "tutor login successfully",
-                        'refresh': str(refresh),
-                        'access': str(refresh.access_token),
-                    }) 
-                else:
-                    return Response({"error": "User is not a tutor"}, status=status.HTTP_403_FORBIDDEN)
-            except CustomUser.DoesNotExist:
-                return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
-        else:
-            return Response({"error": "Username field is required"}, status=status.HTTP_400_BAD_REQUEST)
-
-
 
 
 def generate_random_password(length=10):
@@ -118,7 +93,7 @@ class ForgotPassword(APIView):
         try:
             user = CustomUser.objects.get(id=user_id)
         except CustomUser.DoesNotExist:
-            return Response({"message": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"success":False,"message": "User not found"}, status=status.HTTP_404_NOT_FOUND)
         
         temporary_password = generate_random_password()
         
@@ -126,7 +101,7 @@ class ForgotPassword(APIView):
         user.save()
 
         # Create and save a notification
-        notification_message = f'{user.username} has changed their password. Details: {user.pk,user.email,user.password,user.is_tutor}'
+        notification_message = f'{user.username} has changed their password. Details: {user.pk,user.email,user.password,user.person}'
         notification = Notifications.objects.create(notification=notification_message)
 
 
@@ -142,7 +117,7 @@ class ForgotPassword(APIView):
         from_email = settings.EMAIL_HOST_USER  
 
         send_mail(subject, message, from_email, [email])
-        return Response({"message": "Password Sent Successfully!"}, status=status.HTTP_200_OK)
+        return Response({"success":True,"message": "Password Sent Successfully!"}, status=status.HTTP_200_OK)
 
 
 class BlockUserView(APIView):
@@ -150,34 +125,33 @@ class BlockUserView(APIView):
         try:
             user = CustomUser.objects.get(id=user_id)
         except:
-            return Response({"error":"User not found"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"success":False,"message":"User not found"}, status=status.HTTP_404_NOT_FOUND)
         user.is_active = False
         user.save()
-        return Response({"success": f"User {user.username} has been blocked."}, status=status.HTTP_200_OK)   
+        return Response({"success":True,"message": f"User {user.username} has been blocked."}, status=status.HTTP_200_OK)   
 
 
 class UserProfileUpdateView(APIView):
     permission_classes = [IsAuthenticated]
     
     def patch(self, request, user_id, *args, **kwargs):
-        print(request.headers,"ooooooooooooo")
-        # user = self.request.user
+        print(request.headers)
         user = CustomUser.objects.get(pk=user_id)
         serializer = UserProfileSerializer(user, data=request.data, partial=True)
 
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response({"success":True,"message":"User profile updated successfully","data":serializer.data},status=status.HTTP_200_OK)
         else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"success": False, "message": "Failed to create category due to validation errors.", "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
         
 class AddCertificate(APIView):
     def post(self, request, *args, **kwargs):
         serializer = TutorProfileSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"success":True,"message":"Certificate added successfully","data":serializer.data},status=status.HTTP_201_CREATED)
+        return Response({"success":False,"message":"Failed to add certificate due to validation errors","errors":serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
     
 
 class StudentProfileView(APIView):
@@ -186,7 +160,7 @@ class StudentProfileView(APIView):
         try:
             student_profiles = StudentProfile.objects.filter(student=user)
         except:
-            return Response({'error': 'Student not found.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"success":False,'message': 'Student not found.'}, status=status.HTTP_400_BAD_REQUEST)
 
 
         if student_profiles.exists():
@@ -197,6 +171,8 @@ class StudentProfileView(APIView):
         serializer_user = CustomUserSerializer(user).data
 
         return Response({
+            'success':True,
+            'message':"Successfully fetched student details",
             'student': serializer_student,
             'user': serializer_user
         }, status=status.HTTP_200_OK)
@@ -210,7 +186,7 @@ class TutorProfileView(APIView):
         try:
             tutor_profiles = TutorProfile.objects.filter(tutor=user)
         except:
-            return Response({'error': 'Tutor not found.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'success':False,'message': 'Tutor not found.'}, status=status.HTTP_400_BAD_REQUEST)
 
 
         if tutor_profiles.exists():
@@ -227,6 +203,8 @@ class TutorProfileView(APIView):
         serializer_user = CustomUserSerializer(user).data
 
         return Response({
+            'success':True,
+            'message':'Successfully fetched tutor details',
             'qualifications': serializer_tutor,
             'courses': serializer_courses,
             'user': serializer_user
@@ -241,7 +219,7 @@ class ProfileListView(APIView):
         user_data = []
         for user in users:
             # Retrieve tutor profiles for each user
-            print(user.id,"userrrrrrrrrrrrr")
+            print(user.id)
             tutor_profiles = TutorProfile.objects.filter(tutor=user)
             if tutor_profiles.exists():
                 serializer_tutor = TutorProfileSerializer(tutor_profiles, many=True).data
@@ -267,6 +245,8 @@ class ProfileListView(APIView):
 
             # Add user data to the list
             user_data.append({
+                'success':True,
+                'message':'Data of all user and tutor fetched successfully',
                 'user': serializer_user,
                 'tutor_profiles': serializer_tutor,
                 'student_profiles': serializer_student,
@@ -282,7 +262,7 @@ class VerifyTutor(APIView):
         tutor = CustomUser.objects.get(id=tutor_id)
         tutor.is_tutor_verify = True
         tutor.save()
-        return Response({"message": f"Tutor {tutor.username} has been verified."}, status=status.HTTP_200_OK)
+        return Response({'success':True,"message": f"Tutor {tutor.username} has been verified."}, status=status.HTTP_200_OK)
 
 
 class UserProfileEditView(APIView):
@@ -297,7 +277,7 @@ class UserProfileEditView(APIView):
         serializer = self.serializer_class(instance, data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response({"success":serializer.data},status=status.HTTP_200_OK)
+            return Response({"success":True,"message":"User profile edited successfully","data":serializer.data},status=status.HTTP_200_OK)
         return Response({"error":serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -312,21 +292,21 @@ class ChangePasswordView(APIView):
         new_password = data.get('new_password')
 
         if not old_password or not new_password:
-            return Response({'error': 'Both old_password and new_password are required.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'success':False,'message': 'Both old_password and new_password are required.'}, status=status.HTTP_400_BAD_REQUEST)
 
         if not user.check_password(old_password):
-            return Response({'error': 'Invalid old password.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'success':False,'message': 'Invalid old password.'}, status=status.HTTP_400_BAD_REQUEST)
 
         # Perform password validation
         try:
             validate_password(new_password, user=user)
         except ValidationError as e:
-            return Response({'error': e.messages}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'success':False,'message': e.messages}, status=status.HTTP_400_BAD_REQUEST)
 
         user.set_password(new_password)
         user.save()
 
-        return Response({'success': 'Password changed successfully.'})
+        return Response({'success':True,'message': 'Password changed successfully.'}, status=status.HTTP_200_OK)
 
 
 class AddUserProfile(APIView):
@@ -340,15 +320,15 @@ class AddUserProfile(APIView):
         try:
             queryset = CustomUser.objects.get(id=user.id)
         except CustomUser.DoesNotExist:
-            return Response({'error': 'User profile not found.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'success':False,'message': 'User profile not found.'}, status=status.HTTP_404_NOT_FOUND)
 
         if queryset and profile_image:
             custom_user = queryset
             custom_user.profile_image = profile_image
             custom_user.save()
-            return Response({'success': 'Profile image added successfully.'})
+            return Response({'success':True,'message':'Profile image added successfully.'}, status=status.HTTP_201_CREATED)
         else:
-            return Response({'failure': 'Either user profile not found or profile image not provided.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'success':False,'message': 'Either user profile not found or profile image not provided.'}, status=status.HTTP_400_BAD_REQUEST)
 
 class DeleteUserProfile(APIView):
     permission_classes = [IsAuthenticated]
@@ -359,13 +339,13 @@ class DeleteUserProfile(APIView):
         try:
             queryset = CustomUser.objects.get(id=user.id)
         except CustomUser.DoesNotExist:
-            return Response({'error': 'User profile not found.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'success':False,'message': 'User profile not found.'}, status=status.HTTP_404_NOT_FOUND)
         
         if queryset:
             queryset.profile_image.delete()
-            return Response({'success': 'Profile image deleted successfully.'})
+            return Response({'success':True, 'message':'Profile image deleted successfully.'},status=status.HTTP_200_OK)
         else:
-            return Response({'failure': 'user not found'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'success':False,'message': 'user not found'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 
@@ -377,9 +357,9 @@ class UserLogoutView(APIView):
             refresh_token = request.data['refresh']
             token = RefreshToken(refresh_token)
             OutstandingToken.objects.filter(token=refresh_token).delete()  # Invalidate refresh token
-            return Response({"detail": "Successfully logged out."}, status=status.HTTP_200_OK)
+            return Response({'success':True,"message": "Successfully logged out."}, status=status.HTTP_200_OK)
         except Exception as e:
-            return Response({"detail": "Invalid or missing token.", "error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'success':False,"message": "Invalid or missing token.", "error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         
 
 class TokenRefreshAPIView(TokenRefreshView):

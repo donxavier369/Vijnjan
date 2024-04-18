@@ -17,9 +17,9 @@ class GenerateMeetingLink(APIView):
     def get(self, request):
         try:
             meeting_link = "https://fanzkart.shop/" + get_random_string(length=10)
-            return Response({"success": "Meeting link generated successfully", "link": meeting_link}, status=status.HTTP_200_OK)
+            return Response({"success":True,"message": "Meeting link generated successfully", "link": meeting_link}, status=status.HTTP_200_OK)
         except Exception as e:
-            return Response({"error": f"Failed to generate meeting link: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({"success":False,"message": f"Failed to generate meeting link: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class MeetingApiView(APIView):
@@ -33,14 +33,14 @@ class MeetingApiView(APIView):
         try:
             tutor = CustomUser.objects.get(id=request.user.id)
         except CustomUser.DoesNotExist:
-            return Response({"error": "Tutor not found"})
-        if tutor.is_tutor != True:
-            return Response({"error": "Given user is not a tutor"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"success":False,"message": "Tutor not found"},status=status.http_404_not_found)
+        if tutor.person == 'tutor':
+            return Response({"success":False,"message": "Given user is not a tutor"}, status=status.HTTP_400_BAD_REQUEST)
         elif tutor.is_tutor_verify !=True:
-            return Response({"error": "The tutor not verified by admin"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"success":False,"error": "The tutor not verified by admin"}, status=status.HTTP_400_BAD_REQUEST)
         else:
             if serializer.is_valid():
                 serializer.save()
-                return Response({"success": "Meeting created successfully", **serializer.data}, status=status.HTTP_201_CREATED)
+                return Response({"success":True,"message": "Meeting created successfully","data": serializer.data}, status=status.HTTP_201_CREATED)
             else:
-                return Response({"error": "Unable to create meeting", "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"success":False,"error": "Unable to create meeting", "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)

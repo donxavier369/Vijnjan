@@ -19,10 +19,10 @@ class CourseCreateAPIView(APIView):
             tutor = CustomUser.objects.get(id=request.user.id)
         except:
             pass
-        if tutor.is_tutor != True:
-            return Response({"error": "Given user is not a tutor"}, status=status.HTTP_400_BAD_REQUEST)
+        if tutor.person == 'tutor':
+            return Response({"success":False,"message": "Given user is not a tutor"}, status=status.HTTP_400_BAD_REQUEST)
         elif tutor.is_tutor_verify !=True:
-            return Response({"error": "The tutor not verified by admin"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"success":True,"message": "The tutor not verified by admin"}, status=status.HTTP_400_BAD_REQUEST)
         else:
             if serializer.is_valid():
                 course = serializer.save(tutor=tutor)
@@ -36,11 +36,11 @@ class CourseCreateAPIView(APIView):
                         module_serializer.save(course=course)
                     else:
                         course.delete()  # Delete the created course if module creation fails
-                        return Response({"error": "Failed to create module", "details": module_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+                        return Response({"success":False,"message": "Failed to create module", "details": module_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
-                return Response({"success": "Course created successfully", "course": serializer.data}, status=status.HTTP_201_CREATED)
+                return Response({"success":True,"message": "Course created successfully", "course": serializer.data}, status=status.HTTP_201_CREATED)
             else:
-                return Response({"error": "Failed to create course", "details": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"success":False,"message": "Failed to create course", "details": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class CourseDeleteAPIView(APIView):
@@ -48,11 +48,11 @@ class CourseDeleteAPIView(APIView):
         try:
             course = Courses.objects.get(pk=pk)
             course.delete()
-            return Response({"success": "Course deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+            return Response({"success":True,"message": "Course deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
         except Courses.DoesNotExist:
-            return Response({"error": "Course does not exist"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"success":False,"message": "Course does not exist"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            return Response({"error": f"Failed to delete course: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({"success":True,"message": f"Failed to delete course: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class CourseListAPIView(APIView):

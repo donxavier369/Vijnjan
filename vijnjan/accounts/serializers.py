@@ -12,11 +12,6 @@ from django.contrib.auth import authenticate
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(max_length=68, min_length=6, write_only=True)
 
-    username = serializers.CharField(
-        required=True,
-        validators=[UniqueValidator(queryset=CustomUser.objects.all(), message="Username already exists.")]
-    )
-
     email = serializers.EmailField(
         required=True,
         validators=[UniqueValidator(queryset=CustomUser.objects.all(), message="Email already exists.")]
@@ -24,18 +19,26 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUser
-        fields = ['id', 'email', 'username', 'date_of_birth', 'gender', 'password', 'is_tutor']
+        fields = ['id', 'email', 'username', 'date_of_birth', 'gender', 'password', 'person']
 
     def validate_password(self, value):
         validate_password(value) 
         return value
+    
 
+    def validate_person(self, value):
+        valid_choices = dict(self.fields['person'].choices)
+        if value not in valid_choices:
+            raise serializers.ValidationError(f"{value} is not a valid choice for person. Valid choices are: {', '.join(valid_choices.keys())}.")
+        return value
+
+    
     def validate(self, attrs):
         email = attrs.get('email', '')
         username = attrs.get('username', '')
         date_of_birth = attrs.get('date_of_birth','')
         gender = attrs.get('gender', '')
-        is_tutor = attrs.get('is_tutor', '')
+        person = attrs.get('person', '')
 
         # Check if the username contains any invalid characters
         if any(char in username for char in r'~!@#$%^&*()+=\|{}[]:;"\'<>?,./'):
@@ -55,7 +58,7 @@ class RegisterSerializer(serializers.ModelSerializer):
             date_of_birth = validated_data['date_of_birth'],
             gender = validated_data['gender'],
             password = hashed_password,
-            is_tutor = validated_data['is_tutor']
+            person = validated_data['person']
         )
         user.save()
         return user
@@ -67,7 +70,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 class CustomUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ['id', 'username', 'email', 'profile_image', 'is_tutor', 'date_of_birth', 'gender', 'is_tutor_verify']
+        fields = ['id', 'username', 'email', 'profile_image', 'person', 'date_of_birth', 'gender', 'is_tutor_verify']
 
 
 class TutorProfileSerializer(serializers.ModelSerializer):
@@ -83,20 +86,20 @@ class StudentProfileSerializer(serializers.ModelSerializer):
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ['id', 'email', 'username', 'date_of_birth', 'gender', 'is_tutor']
+        fields = ['id', 'email', 'username', 'date_of_birth', 'gender', 'person']
 
 
 
 class UserLoginSerializer(serializers.Serializer):
-    username = serializers.CharField()
+    email = serializers.CharField()
     password = serializers.CharField(write_only=True)
 
     def validate(self, data):
-        username = data.get('username')
+        email = data.get('email')
         password = data.get('password')
 
-        if username and password:
-            user = authenticate(username=username, password=password)
+        if email and password:
+            user = authenticate(email=email, password=password)
             if user:
                 if user.is_active:
                     data['user'] = user
@@ -105,6 +108,6 @@ class UserLoginSerializer(serializers.Serializer):
             else:
                 raise serializers.ValidationError("Unable to login with provided credentials.")
         else:
-            raise serializers.ValidationError("Must provide username and password.")
+            raise serializers.ValidationError("Must provide email and password.")
 
         return data
