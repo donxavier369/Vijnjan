@@ -146,6 +146,8 @@ class UserProfileUpdateView(APIView):
             return Response({"success": False, "message": "Failed to create category due to validation errors.", "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
         
 class AddCertificate(APIView):
+    permission_classes = [IsAuthenticated]
+    
     def post(self, request, *args, **kwargs):
         serializer = TutorProfileSerializer(data=request.data)
         if serializer.is_valid():
