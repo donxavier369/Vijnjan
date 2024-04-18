@@ -53,15 +53,15 @@ class LoginView(APIView):
 
     def post(self, request, *args, **kwargs):
         serializer = UserLoginSerializer(data=request.data)
-        username = request.data.get('username', None)
+        email = request.data.get('email', None)
         message = ""
-        if username:
+        if email:
             try:
-                user = CustomUser.objects.get(email=username)
+                user = CustomUser.objects.get(email=email)
                 if user.person == 'tutor':
-                    message = "Logined user is a tutor"
+                    message = "Logged-in user is a tutor"
                 elif user.person == 'user':
-                    message="Logined user is a student"
+                    message="Logged-in user is a student"
                 serializer.is_valid(raise_exception=True)
                 user = serializer.validated_data['user']
 
@@ -78,7 +78,7 @@ class LoginView(APIView):
             except CustomUser.DoesNotExist:
                 return Response({'success':False,"message": "User not found"}, status=status.HTTP_404_NOT_FOUND)
         else:
-            return Response({'success':False,"message": "Username field is required"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'success':False,"message": "email field is required"}, status=status.HTTP_400_BAD_REQUEST)
     
 
 
