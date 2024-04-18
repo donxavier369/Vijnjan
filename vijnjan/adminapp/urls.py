@@ -11,7 +11,9 @@ urlpatterns = [
     path('create-category/', CreateCourseCategory.as_view(), name='create_category'),
     path('list-categories/', ListCourseCategory.as_view(), name='list_categories'),
     path('delete-category/<int:category_id>/', DeleteCourseCategory.as_view(), name='delete_category'),
-    path('verify-tutor/<int:tutor_id>/', VerifyTutor.as_view(), name='verify_tutor')
+    path('verify-tutor/<int:tutor_id>/', VerifyTutor.as_view(), name='verify_tutor'),
+    path('block-user/<int:user_id>/', BlockUserView.as_view(), name='block_user'),
+
 
 ]
     

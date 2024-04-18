@@ -120,15 +120,7 @@ class ForgotPassword(APIView):
         return Response({"success":True,"message": "Password Sent Successfully!"}, status=status.HTTP_200_OK)
 
 
-class BlockUserView(APIView):
-    def post(self, request, user_id):
-        try:
-            user = CustomUser.objects.get(id=user_id)
-        except:
-            return Response({"success":False,"message":"User not found"}, status=status.HTTP_404_NOT_FOUND)
-        user.is_active = False
-        user.save()
-        return Response({"success":True,"message": f"User {user.username} has been blocked."}, status=status.HTTP_200_OK)   
+
 
 
 class UserProfileUpdateView(APIView):
@@ -147,7 +139,7 @@ class UserProfileUpdateView(APIView):
         
 class AddCertificate(APIView):
     permission_classes = [IsAuthenticated]
-    
+
     def post(self, request, *args, **kwargs):
         serializer = TutorProfileSerializer(data=request.data)
         if serializer.is_valid():

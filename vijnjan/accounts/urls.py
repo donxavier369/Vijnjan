@@ -20,7 +20,6 @@ urlpatterns = [
     path('student-profile/<int:user_id>/', StudentProfileView.as_view(), name='student-profile'),
     path('tutor-profile/<int:user_id>/', TutorProfileView.as_view(), name='tutor_profile'),
     path('users-profile-list/', views.ProfileListView.as_view(),name='users_profile_list'),
-    path('block-user/<int:user_id>/', BlockUserView.as_view(), name='block_user'),
     path('verify-tutor/<int:tutor_id>/', VerifyTutor.as_view(), name='verify_tutor'),
     path('add-profile-image/', AddUserProfile.as_view(), name='add_profile_image'),
     path('remove-profile-image/',  DeleteUserProfile.as_view(), name='remove-profile-image'),

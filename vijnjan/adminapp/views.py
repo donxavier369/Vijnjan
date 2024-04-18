@@ -222,4 +222,21 @@ class VerifyTutor(APIView):
                 except:
                     return Response({"success":False,"message":"Unable to verify the tutor"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-            
+
+class BlockUserView(APIView):
+    permission_classes = [IsAuthenticated]
+    def post(self, request, user_id):
+        try:
+            user = CustomUser.objects.get(id=user_id)
+        except:
+            return Response({"success":False,"message":"User not found"}, status=status.HTTP_404_NOT_FOUND)
+        try:
+            admin = CustomUser.objects.get(id=request.user.id)
+        except CustomUser.DoesNotExist:
+            return Response({'success':False,'message':'Admin not found'}, status=status.HTTP_404_NOT_FOUND)
+        if not admin.is_superuser:
+            return Response({"success":False,"message": "Given user is not an admin"}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            user.is_active = False
+            user.save()
+            return Response({"success":True,"message": f"User {user.username} has been blocked."}, status=status.HTTP_200_OK)   
