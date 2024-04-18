@@ -34,7 +34,7 @@ class MeetingApiView(APIView):
             tutor = CustomUser.objects.get(id=request.user.id)
         except CustomUser.DoesNotExist:
             return Response({"success":False,"message": "Tutor not found"},status=status.http_404_not_found)
-        if tutor.person == 'tutor':
+        if tutor.person != 'tutor':
             return Response({"success":False,"message": "Given user is not a tutor"}, status=status.HTTP_400_BAD_REQUEST)
         elif tutor.is_tutor_verify !=True:
             return Response({"success":False,"error": "The tutor not verified by admin"}, status=status.HTTP_400_BAD_REQUEST)
