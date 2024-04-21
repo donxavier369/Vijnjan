@@ -30,7 +30,7 @@ class Modules(models.Model):
     module_name = models.CharField(max_length=50)
     module_type = models.CharField(max_length=50)
     module_content_ppt = models.FileField(upload_to='modules/ppt', null=True, blank=True)
-    module_content_video = models.FileField(upload_to='modules/video')
+    module_content_video = models.FileField(upload_to='modules/video', null=True, blank=True)
     
 
 

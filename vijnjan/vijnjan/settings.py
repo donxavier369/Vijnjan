@@ -14,6 +14,7 @@ from pathlib import Path
 import datetime
 from decouple import config
 import os
+import cloudinary_storage
 
 
 
@@ -46,6 +47,8 @@ INSTALLED_APPS = [
     # 'rest_framework.authtoken',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
+    'cloudinary',
+    'cloudinary_storage',
     # 'corsheaders',
     'accounts',
     'meetings',
@@ -215,3 +218,12 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'farmsolve@gmail.com'
 EMAIL_HOST_PASSWORD = 'fvtf vgtu hgjd tiqq'
+
+
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': 'doflqtprn',
+    'API_KEY': '547576839128374',
+    'API_SECRET': 'dnTfaMoqpEzv4Yshfue17nc5L1Q'
+}
+
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
