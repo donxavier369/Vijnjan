@@ -5,6 +5,8 @@ from rest_framework.validators import UniqueValidator
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth import authenticate
+from rest_framework.response import Response
+from rest_framework import status
 
 
 
@@ -108,3 +110,11 @@ class UserLoginSerializer(serializers.Serializer):
             raise serializers.ValidationError("Must provide email and password.")
 
         return data
+    
+    def login_response(self):
+        error_message = ""
+        for field, errors in self.errors.items():
+            for error in errors:
+                error_message += f"{field}: {error} "  # Concatenate field and error message
+
+        return Response({"success": False, "message": error_message.strip()}, status=status.HTTP_400_BAD_REQUEST)

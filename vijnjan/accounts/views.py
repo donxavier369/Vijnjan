@@ -57,10 +57,17 @@ class LoginView(APIView):
     def post(self, request, *args, **kwargs):
         serializer = UserLoginSerializer(data=request.data)
         email = request.data.get('email', None)
+        password = request.data.get('password', None)
+        
+
         message = ""
-        if email:
+        if email and password:
             try:
                 user = CustomUser.objects.get(email=email)
+                if user.is_active == False:
+                    return Response({'success':False,"message": "User is blocked by admin"}, status=status.HTTP_403_FORBIDDEN)
+                if password != user.password:
+                    return Response({'success':False,"message":"The password is incorrect"},status=status.HTTP_400_BAD_REQUEST)
                 if user.person == 'tutor':
                     message = "Logged-in user is a tutor"
                 elif user.person == 'student':
@@ -80,8 +87,10 @@ class LoginView(APIView):
    
             except CustomUser.DoesNotExist:
                 return Response({'success':False,"message": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+            except serializers.ValidationError as error:
+                return serializer.login_response()
         else:
-            return Response({'success':False,"message": "email field is required"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'success':False,"message": "email and password is required"}, status=status.HTTP_400_BAD_REQUEST)
     
 
 
