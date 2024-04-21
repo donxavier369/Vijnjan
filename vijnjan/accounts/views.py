@@ -19,6 +19,8 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from rest_framework_simplejwt.token_blacklist.models import OutstandingToken
 from rest_framework_simplejwt.views import TokenRefreshView
+from django.core.validators import validate_email
+from django.contrib.auth.hashers import check_password
 
 
 # Create your views here.
@@ -29,26 +31,61 @@ class RegisterView(generics.GenericAPIView):
     serializer_class = RegisterSerializer
     
     def post(self, request):
-        user_data = request.data
-        person = user_data.get('person')
-        
-        serializer = self.serializer_class(data=user_data)
-        if serializer.is_valid():
-            user = serializer.save()
-            
-            if person is not None and person == 'tutor':  
-                serializer_data = {key: value for key, value in serializer.data.items() if key not in ['id', 'gender', 'is_tutor']}
+        email = request.data.get('email')
+        username = request.data.get('username')
+        date_of_birth = request.data.get('date_of_birth')
+        gender = request.data.get('gender')
+        person = request.data.get('person')
+        password = request.data.get('password')
+        if not email:
+            return Response({"success": False, "message":"email field is required"}, status=status.HTTP_400_BAD_REQUEST)
+        if not username:
+            return Response({"success": False, "message":"username field is required"}, status=status.HTTP_400_BAD_REQUEST)
+        if not date_of_birth:
+            return Response({"success": False, "message":"date_of_birth field is required"}, status=status.HTTP_400_BAD_REQUEST)
+        if not person:
+            return Response({"success": False, "message":"person field is required"}, status=status.HTTP_400_BAD_REQUEST)
+        if not password:
+            return Response({"success": False, "message":"password field is required"}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            validate_email(email)
+        except ValidationError:
+            return Response({"success": False, "message": "Invalid email format. Please provide a valid email address (e.g., example@example.com)"}, status=status.HTTP_400_BAD_REQUEST)
 
-                notification_message = f"{serializer.data['username']} has registered as a tutor. Please verify the tutor! Details: {serializer_data}"
+        if CustomUser.objects.filter(email=email).exists():
+            return Response({"success": False, "message": "Email already exists."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Check if username contains special characters
+        if any(char in username for char in r'~!@#$%^&*()+=\|{}[]:;"\'<>?,./'):
+            return Response({"success": False, "message": "Username cannot contain special characters other than spaces."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Check if person is valid
+        if person not in dict(USER_TYPE_CHOICES).keys():
+            return Response({"success": False, "message": "Invalid choice for person. Valid choices are: student, tutor"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Check if gender is valid
+        if gender not in dict(GENDER_CHOICES).keys():
+            return Response({"success": False, "message": "Invalid choice for gender. Valid choices are: male, female"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            validate_password(password)
+        except ValidationError as e:
+            return Response({"success": False, "message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        hashed_password = make_password(password)
+        user = CustomUser.objects.create(
+            email=email,
+            username=username,
+            date_of_birth=date_of_birth,
+            gender=gender,
+            password=hashed_password,
+            person=person
+        )
+        if person is not None and person == 'tutor':  
+                notification_message = f"{username} has registered as a tutor. Please verify the tutor! Details: {email,date_of_birth,gender,person}"
                 notification = Notifications.objects.create(notification=notification_message)
-
-            print(serializer.errors)
-            return Response({"success":True,"message":"User registered succussfully","data":serializer.data}, status=status.HTTP_201_CREATED)
-        else:
-            error_message = "Bad request"
-            if 'person' in serializer.errors and "must be either 'student' or 'tutor'" in serializer.errors['person'][0]:
-                error_message = "Person must be either 'student' or 'tutor'."
-            return Response({"success":False,"message": error_message,"error":serializer.errors},status=status.HTTP_400_BAD_REQUEST)
+        return Response({"success": True, "message": "User registered successfully."}, status=status.HTTP_201_CREATED)
+        
         
 
 class LoginView(APIView):
@@ -66,8 +103,8 @@ class LoginView(APIView):
                 user = CustomUser.objects.get(email=email)
                 if user.is_active == False:
                     return Response({'success':False,"message": "User is blocked by admin"}, status=status.HTTP_403_FORBIDDEN)
-                if password != user.password:
-                    return Response({'success':False,"message":"The password is incorrect"},status=status.HTTP_400_BAD_REQUEST)
+                if not check_password(password, user.password):
+                    return Response({'success': False, "message": "The password is incorrect"}, status=status.HTTP_400_BAD_REQUEST)
                 if user.person == 'tutor':
                     message = "Logged-in user is a tutor"
                 elif user.person == 'student':
