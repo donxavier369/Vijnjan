@@ -45,7 +45,10 @@ class RegisterView(generics.GenericAPIView):
             print(serializer.errors)
             return Response({"success":True,"message":"User registered succussfully","data":serializer.data}, status=status.HTTP_201_CREATED)
         else:
-            return Response({"success":False,"message":"Bad request","error":serializer.errors},status=status.HTTP_400_BAD_REQUEST)
+            error_message = "Bad request"
+            if 'person' in serializer.errors and "must be either 'student' or 'tutor'" in serializer.errors['person'][0]:
+                error_message = "Person must be either 'student' or 'tutor'."
+            return Response({"success":False,"message": error_message,"error":serializer.errors},status=status.HTTP_400_BAD_REQUEST)
         
 
 class LoginView(APIView):

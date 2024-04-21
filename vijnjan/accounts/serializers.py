@@ -1,6 +1,6 @@
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework import serializers
-from accounts.models import CustomUser,StudentProfile,TutorProfile
+from accounts.models import GENDER_CHOICES, USER_TYPE_CHOICES, CustomUser,StudentProfile,TutorProfile
 from rest_framework.validators import UniqueValidator
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.password_validation import validate_password
@@ -21,17 +21,14 @@ class RegisterSerializer(serializers.ModelSerializer):
         model = CustomUser
         fields = ['id', 'email', 'username', 'date_of_birth', 'gender', 'password', 'person']
 
+    person = serializers.ChoiceField(choices=USER_TYPE_CHOICES, error_messages={'invalid_choice': 'Invalid choice for person. Valid choices are: student, tutor'})
+    gender = serializers.ChoiceField(choices=GENDER_CHOICES, error_messages={'invalid_choice': 'Invalid choice for gender. Valid choices are: male, female'})
+
+
     def validate_password(self, value):
         validate_password(value) 
         return value
     
-
-    def validate_person(self, value):
-        valid_choices = dict(self.fields['person'].choices)
-        if value not in valid_choices:
-            raise serializers.ValidationError(f"{value} is not a valid choice for person. Valid choices are: {', '.join(valid_choices.keys())}.")
-        return value
-
     
     def validate(self, attrs):
         email = attrs.get('email', '')
@@ -106,7 +103,7 @@ class UserLoginSerializer(serializers.Serializer):
                 else:
                     raise serializers.ValidationError("User account is disabled.")
             else:
-                raise serializers.ValidationError("Unable to login with provided credentials.")
+                raise serializers.ValidationError("Incorrect password.")
         else:
             raise serializers.ValidationError("Must provide email and password.")
 

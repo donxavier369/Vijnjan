@@ -6,17 +6,19 @@ USER_TYPE_CHOICES = [
     ('student', 'Student'),
     ('tutor', 'Tutor'),
 ]
+
+GENDER_CHOICES = [
+    ('male', 'Male'),
+    ('female', 'Female'),
+]
 class CustomUser(AbstractUser):
     username = models.CharField(max_length=150, unique=False)
     email = models.EmailField(max_length=255, unique=True, db_index=True)
     profile_image = models.ImageField(upload_to="profile/profile_image", null=True, blank=True, default=None)
-    person = models.CharField(max_length=10, choices=USER_TYPE_CHOICES, default='user')
+    person = models.CharField(max_length=10, choices=USER_TYPE_CHOICES, default='student')
     date_of_birth = models.DateField(default = date.today)
-    gender = models.CharField(max_length=10, default = '')
+    gender = models.CharField(max_length=10, choices=GENDER_CHOICES, default='male')
     is_tutor_verify = models.BooleanField(default=False)
-
-    
-
 
     USERNAME_FIELD = 'email'
 
