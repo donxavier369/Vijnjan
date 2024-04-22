@@ -10,7 +10,7 @@ sudo systemctl daemon-reload
 sudo systemctl restart gunicorn.socket gunicorn.service
 
 sudo nginx -t && sudo systemctl restart nginx
-
+========================================================================================================
 
 RAM: 32GB
 DISK: 500GB
@@ -23,3 +23,13 @@ Username: root
 Password: gmjuDEIK1761
 
 ssh root@103.184.192.66
+
+DATABASE: vpsvijnjan
+USER: vijnjan
+PASSWORD: password
+
+Email: vijnjan@admin.com
+Username: vpsvijnjan
+password: Vij@1234
+
+myproject: vijnjan

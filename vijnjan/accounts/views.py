@@ -21,12 +21,11 @@ from rest_framework_simplejwt.token_blacklist.models import OutstandingToken
 from rest_framework_simplejwt.views import TokenRefreshView
 from django.core.validators import validate_email
 from django.contrib.auth.hashers import check_password
+from vijnjan.settings import EMAIL_HOST_USER
 
 
 # Create your views here.
 
-
-   
 class RegisterView(generics.GenericAPIView):
     serializer_class = RegisterSerializer
     
@@ -138,9 +137,13 @@ def generate_random_password(length=10):
 
 
 class ForgotPassword(APIView):
-    def post(self, request, user_id):
+    def post(self, request):
+        email = request.data.get('email', None)
+        if not email:
+            return Response({"success":False, "message":"email is required"}, status=status.HTTP_400_BAD_REQUEST)
+        
         try:
-            user = CustomUser.objects.get(id=user_id)
+            user = CustomUser.objects.get(email=email)
         except CustomUser.DoesNotExist:
             return Response({"success":False,"message": "User not found"}, status=status.HTTP_404_NOT_FOUND)
         
