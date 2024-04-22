@@ -371,7 +371,10 @@ class AddUserProfile(APIView):
             custom_user.save()
             return Response({'success':True,'message':'Profile image added successfully.'}, status=status.HTTP_201_CREATED)
         else:
-            return Response({'success':False,'message': 'Either user profile not found or profile image not provided.'}, status=status.HTTP_400_BAD_REQUEST)
+            if not queryset:
+                return Response({'success':False,'message': 'User profile not found '}, status=status.HTTP_400_BAD_REQUEST)
+            elif not profile_image:
+                return Response({'success':False,'message': 'Profile image not provided.'}, status=status.HTTP_400_BAD_REQUEST)
 
 class DeleteUserProfile(APIView):
     permission_classes = [IsAuthenticated]
