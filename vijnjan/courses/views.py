@@ -12,8 +12,14 @@ from rest_framework.permissions import IsAuthenticated
 class AddVideoPptAPI(APIView):
     permission_classes = [IsAuthenticated]
     def post(self, request):
-        tutor_id = request.user.id
         serializer = FileSerializer(data=request.data)
+        tutor_id = request.user.id
+        tutor_from_data = request.data.get('tutor')
+        print(tutor_from_data,"datttttttttt", tutor_id)
+        if tutor_from_data is None:
+             return Response({"success": False, "message": "Tutor ID is missing from the request"}, status=status.HTTP_400_BAD_REQUEST)
+        if tutor_id != int(tutor_from_data):
+            return Response({"success": False, "message":"Authentication credential and given tutor id do not match"}, status=status.HTTP_400_BAD_REQUEST)
         try:
             tutor = CustomUser.objects.get(id=tutor_id)
         except CustomUser.DoesNotExist:
