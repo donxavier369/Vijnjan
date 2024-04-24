@@ -1,19 +1,55 @@
-from .serializers import CourseSerializer, ModuleSerializer, CategorySerializer
+from .serializers import CourseSerializer, ModuleSerializer, CategorySerializer, FileSerializer
 from rest_framework import serializers
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Courses, Modules, Categories
+from .models import Courses, Modules, Categories, Files
 from accounts.models import CustomUser,StudentProfile
 from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 
+
+class AddVideoPptAPI(APIView):
+    permission_classes = [IsAuthenticated]
+    def post(self, request):
+        tutor_id = request.user.id
+        serializer = FileSerializer(data=request.data)
+        try:
+            tutor = CustomUser.objects.get(id=tutor_id)
+        except CustomUser.DoesNotExist:
+            return Response({"success": False,"message": "Tutor does not exists", "data": serializer.data}, status=status.HTTP_404_NOT_FOUND)
+        if tutor.person != 'tutor':
+            return Response({"success":False,"message": "Given user is not a tutor"}, status=status.HTTP_400_BAD_REQUEST)
+        elif tutor.is_tutor_verify !=True:
+            return Response({"success":True,"message": "The tutor not verified by admin"}, status=status.HTTP_400_BAD_REQUEST)
+        if serializer.is_valid(): 
+            serializer.save()
+            return Response({"success": True,"message": "files added successfully", "data": serializer.data}, status=status.HTTP_201_CREATED)
+        else:
+            return Response({"success": False, "message":"fail to add files", "error": serializer.errors})
+
+class GetFiles(APIView):
+    def get(self, request, tutor_id):
+        try:
+            tutor = CustomUser.objects.get(id=tutor_id)
+        except CustomUser.DoesNotExist:
+            return Response({"success": False,"message": "Tutor does not exists", "data": serializer.data}, status=status.HTTP_404_NOT_FOUND)
+        if tutor.person != 'tutor':
+            return Response({"success":False,"message": "Given user is not a tutor"}, status=status.HTTP_400_BAD_REQUEST)
+        elif tutor.is_tutor_verify !=True:
+            return Response({"success":True,"message": "The tutor not verified by admin"}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            files = Files.objects.filter(tutor=tutor_id)
+            serializer = FileSerializer(instance=files, many=True)  
+            return Response({"success": True,"message":"files fetched successfully", "data": serializer.data})
+   
 
 
 class CourseCreateAPIView(APIView):
     permission_classes = [IsAuthenticated]
     def post(self, request):
         print(request.user.id)
+        print(request.data)
         serializer = CourseSerializer(data=request.data)
         try:
             tutor = CustomUser.objects.get(id=request.user.id)
@@ -28,8 +64,11 @@ class CourseCreateAPIView(APIView):
                 course = serializer.save(tutor=tutor)
 
                 # Create associated modules
-                request_modules = request.data.get('modules', [])
+                # request_modules = request.data.get('modules', [])
+                request_modules = request.data.getlist('modules')
+                print(request_modules)
                 for module_data in request_modules:
+                    print(module_data,"mmmmmmmmmmmmmm")
                     module_data['course'] = course.id
                     module_serializer = ModuleSerializer(data=module_data)
                     if module_serializer.is_valid():

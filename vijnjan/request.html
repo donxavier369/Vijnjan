@@ -1,0 +1,80 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Course</title>
+</head>
+<body>
+    <h1>Create Course</h1>
+    <form id="courseForm" enctype="multipart/form-data">
+        <label for="name">Name:</label><br>
+        <input type="text" id="name" name="name" required><br>
+        
+        <label for="description">Description:</label><br>
+        <input type="text" id="description" name="description" required><br>
+        
+        <label for="thumbnail">Thumbnail:</label><br>
+        <input type="file" id="thumbnail" name="thumbnail" required accept="image/*"><br>
+        
+        <label for="duration">Duration:</label><br>
+        <input type="number" id="duration" name="duration" required><br>
+        
+        <label for="category">Category:</label><br>
+        <input type="number" id="category" name="category" required><br>
+        
+        <label for="module1_name">Module 1 Name:</label><br>
+        <input type="text" id="module1_name" name="modules[0][module_name]" required><br>
+        
+        <label for="module1_type">Module 1 Type:</label><br>
+        <select id="module1_type" name="modules[0][module_type]" required>
+            <option value="video">Video</option>
+            <option value="ppt">PPT</option>
+        </select><br>
+        
+        <label for="module1_content">Module 1 Content:</label><br>
+        <input type="file" id="module1_content" name="modules[0][module_content]" required><br>
+        
+        <label for="module2_name">Module 2 Name:</label><br>
+        <input type="text" id="module2_name" name="modules[1][module_name]" required><br>
+        
+        <label for="module2_type">Module 2 Type:</label><br>
+        <select id="module2_type" name="modules[1][module_type]" required>
+            <option value="video">Video</option>
+            <option value="ppt">PPT</option>
+        </select><br>
+        
+        <label for="module2_content">Module 2 Content:</label><br>
+        <input type="file" id="module2_content" name="modules[1][module_content]" required><br>
+        
+        <input type="submit" value="Submit">
+    </form>
+
+    <script>
+        // Replace 'YOUR_ACCESS_TOKEN' with the actual access token
+        const accessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzE0NTE1OTgwLCJpYXQiOjE3MTM5MTExODAsImp0aSI6IjVjNWZmZGRkNzZiMTQzMzU4ZGQ5ODU4ZjA5ODc5MmUwIiwidXNlcl9pZCI6Mzh9.r5mvQFnaT_-I6hqzJuLOYarRF-SYQuYTQKVI3fuBQXw';
+
+        document.getElementById('courseForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            var formData = new FormData(this);
+
+            fetch('http://127.0.0.1:8000/courses/create-course/', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data);
+                // Handle response data here
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
+    </script>
+</body>
+</html>

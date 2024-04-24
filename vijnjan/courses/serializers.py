@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Courses, Modules, Categories
+from .models import Courses, Modules, Categories, Files
 from django.core.validators import MinValueValidator
 
 
@@ -32,4 +32,9 @@ class CategorySerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Categories
+        fields = '__all__'
+
+class FileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Files
         fields = '__all__'

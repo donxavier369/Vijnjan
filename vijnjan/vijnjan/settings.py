@@ -182,25 +182,7 @@ REST_FRAMEWORK = {
     ],
 }
 
-# REST_FRAMEWORK = {  
-#     'DEFAULT_PERMISSION_CLASSES': [     
-#         'rest_framework.permissions.IsAuthenticated', 
-#     ], 
-#     'DEFAULT_AUTHENTICATION_CLASSES': [
-#         'rest_framework.authentication.TokenAuthentication', 
-#     ], 
-#     'DEFAULT_AUTHENTICATION_CLASSES': (
-#          'rest_framework_simplejwt.authentication.JWTAuthentication',
-#      )
-# } 
 
-# REST_FRAMEWORK = {
-#     'DEFAULT_PARSER_CLASSES': [
-#         'rest_framework.parsers.JSONParser',
-#         'rest_framework.parsers.FormParser',
-#         'rest_framework.parsers.MultiPartParser', 
-#     ],
-# }
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': datetime.timedelta(days=7),
@@ -216,16 +198,16 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'pbsvijnjandev@gmail.com'
-EMAIL_HOST_PASSWORD = 'ugzu lppg lfsx ofqn'
+EMAIL_HOST_USER = config('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 
+AWS_ACCESS_KEY_ID = config('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = config('AWS_SECRET_ACCESS_KEY')
+AWS_STORAGE_BUCKET_NAME = config('AWS_STORAGE_BUCKET_NAME')
+AWS_S3_SIGNATURE_NAME = config('AWS_S3_SIGNATURE_NAME')
+AWS_S3_REGION_NAME = config('AWS_S3_REGION_NAME')
+AWS_S3_FILE_OVERWRITE = False
+AWS_DEFAULT_ACL =  None
+AWS_S3_VERIFY = True
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 
-
-
-CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': 'doflqtprn',
-    'API_KEY': '547576839128374',
-    'API_SECRET': 'dnTfaMoqpEzv4Yshfue17nc5L1Q'
-}
-
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
