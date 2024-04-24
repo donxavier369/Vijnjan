@@ -33,3 +33,12 @@ Username: vpsvijnjan
 password: Vij@1234
 
 myproject: vijnjan
+
+================================================================================================
+sudo nano /etc/nginx/nginx.conf
+
+http {
+    ...
+    client_max_body_size 100M;
+    ...
+}

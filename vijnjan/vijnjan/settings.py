@@ -14,7 +14,6 @@ from pathlib import Path
 import datetime
 from decouple import config
 import os
-import cloudinary_storage
 
 
 
