@@ -22,6 +22,8 @@ Location: Mumbai
 Username: root
 Password: gmjuDEIK1761
 
+donxavier_18041997@
+
 ssh root@103.184.192.66
 
 DATABASE: vpsvijnjan

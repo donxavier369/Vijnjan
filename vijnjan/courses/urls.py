@@ -12,6 +12,7 @@ urlpatterns = [
     path('category_courses/', CategoryCourseListView.as_view(), name='category_courses'),
     path('add-files/', views.AddVideoPptAPI.as_view(), name="add-files"),
     path('get-files/<int:tutor_id>/', views.GetFiles.as_view(), name='get-files'),
+    path('add-sample-course/', SampleCourseCreateAPIView.as_view(), name='add-sample-course'),
 ]
 
 

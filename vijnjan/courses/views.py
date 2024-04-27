@@ -50,7 +50,23 @@ class GetFiles(APIView):
             return Response({"success": True,"message":"files fetched successfully", "data": serializer.data})
    
 
+class SampleCourseCreateAPIView(APIView):
+    def post(self, request):
+        print(request.user.id)
+        print(request.data)
 
+        
+
+
+            # Create associated modules
+        request_modules = request.data.get('modules', [])
+        print(request_modules, "requestttttttttttttted data")
+        for module_data in request_modules:
+            print(module_data,"mmmmmmmmmmmmmm")
+        return Response({"success":True,"message": "Course created successfully"}, status=status.HTTP_201_CREATED)
+
+
+    
 class CourseCreateAPIView(APIView):
     permission_classes = [IsAuthenticated]
     def post(self, request):
@@ -70,8 +86,8 @@ class CourseCreateAPIView(APIView):
                 course = serializer.save(tutor=tutor)
 
                 # Create associated modules
-                # request_modules = request.data.get('modules', [])
-                request_modules = request.data.getlist('modules')
+                request_modules = request.data.get('modules', [])
+                # request_modules = request.data.getlist('modules')
                 print(request_modules)
                 for module_data in request_modules:
                     print(module_data,"mmmmmmmmmmmmmm")
