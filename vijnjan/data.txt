@@ -44,3 +44,5 @@ http {
     client_max_body_size 100M;
     ...
 }
+
+cloudflare password : r7.p!!Wyjkrk_kp
