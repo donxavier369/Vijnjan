@@ -22,6 +22,8 @@ from rest_framework_simplejwt.views import TokenRefreshView
 from django.core.validators import validate_email
 from django.contrib.auth.hashers import check_password
 from vijnjan.settings import EMAIL_HOST_USER
+from rest_framework_simplejwt.exceptions import InvalidToken
+
 
 
 # Create your views here.
@@ -257,15 +259,20 @@ class TutorProfileView(APIView):
         }, status=status.HTTP_200_OK)
 
 
+
+
 class ProfileListView(APIView):
     def get(self, request):
         # Retrieve all users
         users = CustomUser.objects.all()
+        is_tutor = ""
         
-        user_data = []
+        serializer_courses = []
+        tutor_data = []
+        student_data = []
         for user in users:
             # Retrieve tutor profiles for each user
-            print(user.id)
+            is_tutor = user.person
             tutor_profiles = TutorProfile.objects.filter(tutor=user)
             if tutor_profiles.exists():
                 serializer_tutor = TutorProfileSerializer(tutor_profiles, many=True).data
@@ -276,30 +283,36 @@ class ProfileListView(APIView):
             student_profiles = StudentProfile.objects.filter(student=user)
             if student_profiles.exists():
                 serializer_student = StudentProfileSerializer(student_profiles, many=True).data
+                for student in serializer_student:
+                    courses_ids = student.get('courses')
+                    if courses_ids:
+                        print("Course IDs:", courses_ids)
+                        courses = Courses.objects.filter(id=courses_ids)
+                        try:
+                            serializer_courses = CourseSerializer(courses, many=True).data
+                        except Courses.DoesNotExist:
+                            serializer_courses = []
+
             else:
                 serializer_student = "The student does not have any courses"
-
+            
             # Retrieve courses for each user
-            courses = Courses.objects.filter(tutor=user)
-            try:
-                serializer_courses = CourseSerializer(courses, many=True).data
-            except Courses.DoesNotExist:
-                serializer_courses = "The tutor does not have any courses"
-
+            
             # Serialize the user
             serializer_user = CustomUserSerializer(user).data
+            if user.person == 'tutor':
+                tutor_data.append({
+                    **serializer_user,
+                    'Qualifications': serializer_tutor,
+                })
 
-            # Add user data to the list
-            user_data.append({
-                'success':True,
-                'message':'Data of all user and tutor fetched successfully',
-                'user': serializer_user,
-                'tutor_profiles': serializer_tutor,
-                'student_profiles': serializer_student,
-                'courses': serializer_courses
-            })
+            elif user.person == 'student':
+                student_data.append({
+                    **serializer_user,
+                    'courses': serializer_courses
+                })
+        return Response({"success": True, "message": "Data of all user and tutor fetched successfully", "tutor_profile": tutor_data, "student_profile":student_data}, status=status.HTTP_200_OK)
 
-        return Response(user_data, status=status.HTTP_200_OK)
 
 
 
@@ -411,5 +424,9 @@ class UserLogoutView(APIView):
             return Response({'success':False,"message": "Invalid or missing token.", "error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         
 
+
 class TokenRefreshAPIView(TokenRefreshView):
-    pass
+    def handle_exception(self, exc):
+        if isinstance(exc, InvalidToken):
+            return Response({'success': False, 'message': 'Refresh token is invalid or expired.'}, status=status.HTTP_400_BAD_REQUEST)
+        return super().handle_exception(exc)
