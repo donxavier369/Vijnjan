@@ -260,7 +260,7 @@ class StudentProfileView(APIView):
         if student_profiles.exists():
             serializer_student = StudentProfileSerializer(student_profiles, many=True).data
         else:
-            serializer_student = "The student does not have any courses"
+            serializer_student = []
 
         serializer_user = CustomUserSerializer(user).data
 
@@ -285,7 +285,7 @@ class TutorProfileView(APIView):
         if tutor_profiles.exists():
             serializer_tutor = TutorProfileSerializer(tutor_profiles, many=True).data
         else:
-            serializer_tutor = "Qualifications not found!"
+            serializer_tutor = []
 
         try:
             courses = Courses.objects.filter(tutor=user)
