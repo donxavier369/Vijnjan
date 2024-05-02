@@ -97,8 +97,9 @@ class LoginView(APIView):
         email = request.data.get('email', None)
         password = request.data.get('password', None)
         
-
-        message = ""
+        serializer_courses = []
+        data = []
+        courses = []
         if email and password:
             try:
                 user = CustomUser.objects.get(email=email)
@@ -106,22 +107,66 @@ class LoginView(APIView):
                     return Response({'success':False,"message": "User is blocked by admin"}, status=status.HTTP_403_FORBIDDEN)
                 if not check_password(password, user.password):
                     return Response({'success': False, "message": "The password is incorrect"}, status=status.HTTP_400_BAD_REQUEST)
-                if user.person == 'tutor':
-                    message = "Logged-in user is a tutor"
-                elif user.person == 'student':
-                    message="Logged-in user is a student"
                 serializer.is_valid(raise_exception=True)
                 user = serializer.validated_data['user']
 
                 refresh = RefreshToken.for_user(user)
                 user_data = CustomUserSerializer(user).data
-                return Response({
-                    'success': True,
-                    'message':message,
-                    'refresh': str(refresh),
-                    'access': str(refresh.access_token),
-                    'data' : user_data
-                }) 
+                refresh = RefreshToken.for_user(user)
+
+                if user.person == 'tutor':
+                    tutor_profiles = TutorProfile.objects.filter(tutor=user)
+                    if tutor_profiles.exists():
+                        serializer_tutor = TutorProfileSerializer(tutor_profiles, many=True).data
+                    else:
+                        serializer_tutor = []
+                    try:
+                        tutor_courses = Courses.objects.filter(tutor = user.id)
+                    except:
+                        tutor_courses = None
+                    if tutor_courses:
+                        try:
+                            serializer_courses = CourseSerializer(tutor_courses, many=True).data
+                        except Courses.DoesNotExist:
+                            serializer_courses = []
+                    
+                    data.append({
+                        **user_data,
+                        'Qualifications': serializer_tutor,
+                        'courses': serializer_courses,
+                    })
+                    return Response({
+                        'success': True,
+                        'message':"Tutor login successfully",
+                        'refresh': str(refresh),
+                        'access': str(refresh.access_token),
+                        'data' : data
+                    }) 
+                elif user.person == 'student':
+                    student_profiles = StudentProfile.objects.filter(student=user)
+                    if student_profiles.exists():
+                        serializer_student = StudentProfileSerializer(student_profiles, many=True).data
+                        for student in serializer_student:
+                            courses_ids = student.get('courses')
+                            if courses_ids:
+                                print("Course IDs:", courses_ids)
+                                courses = Courses.objects.filter(id=courses_ids)
+                                try:
+                                    serializer_courses = CourseSerializer(courses, many=True).data
+                                except Courses.DoesNotExist:
+                                    serializer_courses = []
+                    data.append({
+                        **user_data,
+                        'courses': serializer_courses
+                    })
+                    return Response({
+                        'success': True,
+                        'message':'Student login successfully',
+                        'refresh': str(refresh),
+                        'access': str(refresh.access_token),
+                        'data' : data
+                    }) 
+              
    
             except CustomUser.DoesNotExist:
                 return Response({'success':False,"message": "User not found"}, status=status.HTTP_404_NOT_FOUND)
@@ -190,7 +235,8 @@ class UserProfileUpdateView(APIView):
             return Response({"success":True,"message":"User profile updated successfully","data":serializer.data},status=status.HTTP_200_OK)
         else:
             return Response({"success": False, "message": "Failed to create category due to validation errors.", "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-        
+
+
 class AddCertificate(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -226,7 +272,7 @@ class StudentProfileView(APIView):
         }, status=status.HTTP_200_OK)
 
   
-        
+
 class TutorProfileView(APIView):
     def get(self, request, user_id):
         user = get_object_or_404(CustomUser, id=user_id)
@@ -234,8 +280,7 @@ class TutorProfileView(APIView):
         try:
             tutor_profiles = TutorProfile.objects.filter(tutor=user)
         except:
-            return Response({'success':False,'message': 'Tutor not found.'}, status=status.HTTP_400_BAD_REQUEST)
-
+            return Response({'success': False, 'message': 'Tutor not found.'}, status=status.HTTP_400_BAD_REQUEST)
 
         if tutor_profiles.exists():
             serializer_tutor = TutorProfileSerializer(tutor_profiles, many=True).data
@@ -246,13 +291,13 @@ class TutorProfileView(APIView):
             courses = Courses.objects.filter(tutor=user)
             serializer_courses = CourseSerializer(courses, many=True).data
         except Courses.DoesNotExist:
-            serializer_courses = "The tutor does not have any courses"
+            serializer_courses = []
 
         serializer_user = CustomUserSerializer(user).data
 
         return Response({
-            'success':True,
-            'message':'Successfully fetched tutor details',
+            'success': True,
+            'message': 'Successfully fetched tutor details',
             'qualifications': serializer_tutor,
             'courses': serializer_courses,
             'user': serializer_user
@@ -277,7 +322,7 @@ class ProfileListView(APIView):
             if tutor_profiles.exists():
                 serializer_tutor = TutorProfileSerializer(tutor_profiles, many=True).data
             else:
-                serializer_tutor = "Qualifications not found!"
+                serializer_tutor = []
 
             # Retrieve student profiles for each user
             student_profiles = StudentProfile.objects.filter(student=user)
@@ -294,7 +339,7 @@ class ProfileListView(APIView):
                             serializer_courses = []
 
             else:
-                serializer_student = "The student does not have any courses"
+                serializer_student = []
             
             # Retrieve courses for each user
             
@@ -408,7 +453,6 @@ class DeleteUserProfile(APIView):
             return Response({'success':True, 'message':'Profile image deleted successfully.'},status=status.HTTP_200_OK)
         else:
             return Response({'success':False,'message': 'user not found'}, status=status.HTTP_400_BAD_REQUEST)
-
 
 
 

@@ -143,10 +143,13 @@ class CourseListAPIView(APIView):
 
 
 class ModuleListAPIView(APIView):
-    def get(self, request, course_id, user_id):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, course_id):
+        print(request.user.id)
         try:
             course = Courses.objects.get(id=course_id)
-            user = CustomUser.objects.get(id=user_id)
+            user = CustomUser.objects.get(id=request.user.id)
 
             # Check if the user is enrolled in the course
             if not StudentProfile.objects.filter(student=user, courses=course).exists():
