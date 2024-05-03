@@ -12,6 +12,7 @@ from accounts.serializers import UserLoginSerializer,CustomUserSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import NotFound
+from django.contrib.auth.hashers import check_password
 
 
 
@@ -21,9 +22,12 @@ class AdminLoginView(APIView):
     def post(self, request, *args, **kwargs):
         serializer = UserLoginSerializer(data=request.data)
         email = request.data.get('email', None)
+        password = request.data.get('password', None)
         if email:
             try:
                 user = CustomUser.objects.get(email=email)
+                if not check_password(password, user.password):
+                    return Response({'success': False, "message": "The password is incorrect"}, status=status.HTTP_400_BAD_REQUEST)
                 if not user.is_superuser:
                     return Response({'success':False,'message':'The user is not an admin'}, status=status.HTTP_400_BAD_REQUEST)
                 else:
