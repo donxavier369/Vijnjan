@@ -353,7 +353,7 @@ class ProfileListView(APIView):
                     'Qualifications': serializer_tutor,
                 })
 
-            elif user.person == 'student':
+            elif user.person == 'student' and user.is_superuser == False:
                 student_data.append({
                     **serializer_user,
                     'courses': serializer_courses
