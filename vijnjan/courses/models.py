@@ -11,7 +11,7 @@ def validate_thumbnail_size(value):
     img = Image.open(value)
 
     # Checking the file size
-    if value.size > 1000 * 1024:  # 20KB
+    if value.size > 1000 * 1024:  
         raise ValidationError("Image file size cannot exceed 1MB.")
 
 class Courses(models.Model):

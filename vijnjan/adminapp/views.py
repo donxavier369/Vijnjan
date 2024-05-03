@@ -21,7 +21,6 @@ class AdminLoginView(APIView):
     def post(self, request, *args, **kwargs):
         serializer = UserLoginSerializer(data=request.data)
         email = request.data.get('email', None)
-        message = ""
         if email:
             try:
                 user = CustomUser.objects.get(email=email)
@@ -35,7 +34,7 @@ class AdminLoginView(APIView):
                     user_data = AdminSerializer(user).data
                     return Response({
                         'success': True,
-                        'message':message,
+                        'message':'Admin login successfully',
                         'refresh': str(refresh),
                         'access': str(refresh.access_token),
                         'data' : user_data

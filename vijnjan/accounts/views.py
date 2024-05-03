@@ -103,6 +103,8 @@ class LoginView(APIView):
         if email and password:
             try:
                 user = CustomUser.objects.get(email=email)
+                if user.is_superuser == True:
+                    return Response({'success':True, 'message': 'User is a superuser'}, status=status.HTTP_400_BAD_REQUEST)
                 if user.is_active == False:
                     return Response({'success':False,"message": "User is blocked by admin"}, status=status.HTTP_403_FORBIDDEN)
                 if not check_password(password, user.password):
