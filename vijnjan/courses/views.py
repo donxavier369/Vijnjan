@@ -56,7 +56,6 @@ class CourseCreateAPIView(APIView):
     def post(self, request):
         print(request.user.id)
         print(request.data)
-        print("name",request.data['name'])
         serializer = CourseSerializer(data=request.data)
         try:
             tutor = CustomUser.objects.get(id=request.user.id)
@@ -73,7 +72,7 @@ class CourseCreateAPIView(APIView):
 
                 return Response({"success":True,"message": "Course created successfully", "course": serializer.data}, status=status.HTTP_201_CREATED)
             else:
-                return Response({"success":False,"message": "Failed to create course", "details": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"success":False,"message": "Failed to create course", "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ModuelCreateAPIView(APIView):
@@ -88,7 +87,7 @@ class ModuelCreateAPIView(APIView):
         tutor_id = request.user.id
 
         if module_content_ppt is None and module_content_video is None:
-            return Response({"success": False, "message": "Video or PPT is required to add a module"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"success": False, "message": "module_content_video or module_content_ppt is required to add a module"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             course = Courses.objects.get(id=get_course)
