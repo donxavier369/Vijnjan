@@ -78,40 +78,34 @@ class CourseCreateAPIView(APIView):
 
 class ModuelCreateAPIView(APIView):
     permission_classes = [IsAuthenticated]
+
     def post(self, request):
         serializer = ModuleSerializer(data=request.data)
         module_type = request.data.get('module_type')
         get_course = request.data.get('course')
-        module_content_video = request.data.get('module_content_video', None)
-        module_content_ppt = request.data.get('module_content_ppt', None)
-        tutor = request.user.id
-        course = []
-        print(tutor)
-        print(course)
-        if module_content_ppt == None and module_content_video == None:
-            return Response({"success": False, "message": "video or PPT is required to add a module"}, status=status.HTTP_400_BAD_REQUEST)
+        module_content_video = request.data.get('module_content_video')
+        module_content_ppt = request.data.get('module_content_ppt')
+        tutor_id = request.user.id
+
+        if module_content_ppt is None and module_content_video is None:
+            return Response({"success": False, "message": "Video or PPT is required to add a module"}, status=status.HTTP_400_BAD_REQUEST)
+
         try:
             course = Courses.objects.get(id=get_course)
-            print(course.name)
         except Courses.DoesNotExist:
             return Response({"success": False, "message": "Course not found"}, status=status.HTTP_404_NOT_FOUND)
-        try:
-            tutor = CustomUser.objects.get(id=tutor)
-            print(tutor)
-        except CustomUser.DoesNotExist:
-            return Response({"success": False, "message": "Tutor not found"}, status=status.HTTP_404_NOT_FOUND)
-        
-        if tutor.id != course.tutor.id:
-            return Response({"success": False, "message": "provided course is not belongs to the tutor"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if tutor_id != course.tutor.id:
+            return Response({"success": False, "message": "Provided course does not belong to the tutor"}, status=status.HTTP_400_BAD_REQUEST)
             
         if module_type not in dict(MODULE_TYPE_CHOICES).keys():
             return Response({"success": False, "message": "Invalid choice for module type. Valid choices are: video, ppt"}, status=status.HTTP_400_BAD_REQUEST)
 
         if serializer.is_valid():
-                course = serializer.save()
-                return Response({"success":True, "message": "module added successfully", "data": serializer.data}, status=status.HTTP_201_CREATED)
-        return Response({"success":False, "message": "Fail to add module", "error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-
+            serializer.save()
+            return Response({"success": True, "message": "Module added successfully", "data": serializer.data}, status=status.HTTP_201_CREATED)
+        else:
+            return Response({"success": False, "message": "Failed to add module", "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
    
     
 class CourseDeleteAPIView(APIView):

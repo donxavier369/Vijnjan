@@ -243,3 +243,26 @@ class BlockUserView(APIView):
             user.is_active = False
             user.save()
             return Response({"success":True,"message": f"User {user.username} has been blocked."}, status=status.HTTP_200_OK)   
+        
+
+class UnBlockUserView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, user_id):
+        try:
+            user = CustomUser.objects.get(id=user_id)
+        except CustomUser.DoesNotExist:
+            return Response({"success": False, "message": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+        try:
+            admin = CustomUser.objects.get(id=request.user.id)
+        except CustomUser.DoesNotExist:
+            return Response({'success': False, 'message': 'Admin not found'}, status=status.HTTP_404_NOT_FOUND)
+        
+        if not admin.is_superuser:
+            return Response({"success": False, "message": "You do not have permission to perform this action."}, status=status.HTTP_403_FORBIDDEN)
+        else:
+            user.is_active = True
+            user.save()
+            return Response({"success": True, "message": f"User {user.username} has been unblocked."}, status=status.HTTP_200_OK)
+  
