@@ -14,16 +14,21 @@ class ModuleSerializer(serializers.ModelSerializer):
 class CourseSerializer(serializers.ModelSerializer):
     category_name = serializers.SerializerMethodField()
     tutor_name = serializers.SerializerMethodField()
+    tutor_id = serializers.SerializerMethodField()
+
 
     def get_category_name(self, obj):
         return obj.category.category_name
 
     def get_tutor_name(self, obj):
-        return obj.tutor.username  # Assuming tutor has a username field
+        return obj.tutor.username  
+    
+    def get_tutor_id(self, obj):
+        return obj.tutor.id
 
     class Meta:
         model = Courses
-        fields = ('id', 'name', 'description', 'thumbnail', 'duration', 'category', 'category_name', 'tutor_name')
+        fields = ('id', 'name', 'description', 'thumbnail', 'duration', 'category', 'category_name', 'tutor_name', 'tutor_id')
 
         # Validate duration to be positive
         extra_kwargs = {'duration': {'validators': [MinValueValidator(1)]}}
