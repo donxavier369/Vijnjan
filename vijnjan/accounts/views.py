@@ -103,6 +103,8 @@ class LoginView(APIView):
         if email and password:
             try:
                 user = CustomUser.objects.get(email=email)
+                if user.person == 'tutor' and user.is_tutor_verify == False:
+                    return Response({'success': False, 'message': 'User is not verified by admin'}, status=status.HTTP_401_UNAUTHORIZED)
                 if user.is_superuser == True:
                     return Response({'success':True, 'message': 'User is a superuser'}, status=status.HTTP_400_BAD_REQUEST)
                 if user.is_active == False:
