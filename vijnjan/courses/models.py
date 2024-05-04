@@ -24,11 +24,14 @@ class Courses(models.Model):
     category = models.ForeignKey(Categories, on_delete=models.CASCADE)
     
 
-
+MODULE_TYPE_CHOICES = [
+    ('video', 'Video'),
+    ('ppt', 'ppt'),
+]
 class Modules(models.Model):
     course = models.ForeignKey('courses.Courses', on_delete=models.CASCADE)
     module_name = models.CharField(max_length=50)
-    module_type = models.CharField(max_length=50)
+    module_type = models.CharField(choices=MODULE_TYPE_CHOICES, default='ppt')
     module_content_ppt = models.FileField(upload_to='modules/ppt', null=True, blank=True)
     module_content_video = models.FileField(upload_to='modules/video', null=True, blank=True)
     
