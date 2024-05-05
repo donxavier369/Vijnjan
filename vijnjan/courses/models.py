@@ -39,4 +39,3 @@ class Modules(models.Model):
 class Files(models.Model):
     ppt = models.FileField(upload_to='modules/ppt', null=True, blank=True)
     video = models.FileField(upload_to='modules/video', null=True, blank=True)
-    tutor = models.ForeignKey('accounts.CustomUser', on_delete=models.CASCADE)

@@ -16,7 +16,6 @@ from rest_framework.exceptions import AuthenticationFailed
 
 
 class AddVideoPptAPI(APIView):
-    permission_classes = [IsAuthenticated]
     def post(self, request):
         serializer = FileSerializer(data=request.data)
         tutor_id = request.user.id
