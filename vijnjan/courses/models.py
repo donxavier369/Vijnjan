@@ -1,6 +1,8 @@
 from django.db import models
 from django.core.exceptions import ValidationError
 from PIL import Image
+from django.core.exceptions import ValidationError
+
 # Create your models here.
 
 class Categories(models.Model):
@@ -34,6 +36,14 @@ class Modules(models.Model):
     module_type = models.CharField(choices=MODULE_TYPE_CHOICES, default='ppt')
     module_content_ppt = models.FileField(upload_to='modules/ppt', null=True, blank=True)
     module_content_video = models.FileField(upload_to='modules/video', null=True, blank=True)
+
+    def clean(self):
+        super().clean()
+
+        if self.module_content_video:
+            file_size = self.module_content_video.size
+            if file_size > 1024 * 1024 * 1024:  # 1 GB in bytes
+                raise ValidationError("Video file size cannot exceed 1 GB.")
     
 
 class Files(models.Model):

@@ -81,37 +81,14 @@ class CourseCreateAPIView(APIView):
 
 
     
-# class ModuelCreateAPIView(APIView):
- 
-#     permission_classes = [IsAuthenticated]
-
-#     def post(self, request, format=None):
-        
-#         data = request.data 
-#         print(data, "dataaaaaaaaa")
-#         data_dict = json.loads(data) 
-#         modules = data_dict.get('modules', [])
-#         for module_data in modules:
-#             module = json.loads(module_data)
-#             module_name = module.get('module_name')
-#             module_type = module.get('module_type')
-#             print(f"Module Name: {module_name}, Module Type: {module_type}")
-     
-
-        # created_modules = []
-        # with transaction.atomic():
-        #     for module_data in data['modules']:
-        #         print("worked")
-        #         serializer = ModuleSerializer(data=module_data)
-        #         if serializer.is_valid():
-        #             serializer.save()
-        #             created_modules.append(serializer.data)
-        #         else:
-        #             print(serializer.errors, "serializer errors")
-        #             # Handle validation errors (optional: raise exception, log errors)
-        #             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-        # return Response(created_modules, status=status.HTTP_201_CREATED)
+class AddModulesAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    def post(self, request, format=None):
+        serializer = ModuleSerializer(data=request.data, many=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"success":True, "message": "Module added successfully", "data":serializer.data}, status=status.HTTP_201_CREATED)
+        return Response({"success": False, "message": "Unable to add modules", "error":serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 # class ModuelCreateAPIView(APIView):
 #     permission_classes = [IsAuthenticated]
