@@ -18,21 +18,21 @@ from rest_framework.exceptions import AuthenticationFailed
 class AddVideoPptAPI(APIView):
     def post(self, request):
         serializer = FileSerializer(data=request.data)
-        tutor_id = request.user.id
-        tutor_from_data = request.data.get('tutor')
-        print(tutor_from_data,"datttttttttt", tutor_id)
-        if tutor_from_data is None:
-             return Response({"success": False, "message": "Tutor ID is missing from the request"}, status=status.HTTP_400_BAD_REQUEST)
-        if tutor_id != int(tutor_from_data):
-            return Response({"success": False, "message":"Authentication credential and given tutor id do not match"}, status=status.HTTP_400_BAD_REQUEST)
-        try:
-            tutor = CustomUser.objects.get(id=tutor_id)
-        except CustomUser.DoesNotExist:
-            return Response({"success": False,"message": "Tutor does not exists", "data": serializer.data}, status=status.HTTP_404_NOT_FOUND)
-        if tutor.person != 'tutor':
-            return Response({"success":False,"message": "Given user is not a tutor"}, status=status.HTTP_400_BAD_REQUEST)
-        elif tutor.is_tutor_verify !=True:
-            return Response({"success":True,"message": "The tutor not verified by admin"}, status=status.HTTP_400_BAD_REQUEST)
+        # tutor_id = request.user.id
+        # tutor_from_data = request.data.get('tutor')
+        # print(tutor_from_data,"datttttttttt", tutor_id)
+        # if tutor_from_data is None:
+        #      return Response({"success": False, "message": "Tutor ID is missing from the request"}, status=status.HTTP_400_BAD_REQUEST)
+        # if tutor_id != int(tutor_from_data):
+        #     return Response({"success": False, "message":"Authentication credential and given tutor id do not match"}, status=status.HTTP_400_BAD_REQUEST)
+        # try:
+        #     tutor = CustomUser.objects.get(id=tutor_id)
+        # except CustomUser.DoesNotExist:
+        #     return Response({"success": False,"message": "Tutor does not exists", "data": serializer.data}, status=status.HTTP_404_NOT_FOUND)
+        # if tutor.person != 'tutor':
+        #     return Response({"success":False,"message": "Given user is not a tutor"}, status=status.HTTP_400_BAD_REQUEST)
+        # elif tutor.is_tutor_verify !=True:
+        #     return Response({"success":True,"message": "The tutor not verified by admin"}, status=status.HTTP_400_BAD_REQUEST)
         if serializer.is_valid(): 
             serializer.save()
             return Response({"success": True,"message": "files added successfully", "data": serializer.data}, status=status.HTTP_201_CREATED)
