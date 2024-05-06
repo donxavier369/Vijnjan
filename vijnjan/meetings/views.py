@@ -44,3 +44,10 @@ class MeetingApiView(APIView):
                 return Response({"success":True,"message": "Meeting created successfully","data": serializer.data}, status=status.HTTP_201_CREATED)
             else:
                 return Response({"success":False,"message": "Unable to create meeting", "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class MeetingListView(APIView):
+    def get(self, request):
+        meetings = Meetings.objects.all()
+        serializer = MeetingSerializer(instance=meetings, many=True)  
+        return Response({"success": False, "message": "meeting listed successfully", "data": serializer.data}, status=status.HTTP_200_OK)

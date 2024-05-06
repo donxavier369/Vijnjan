@@ -72,8 +72,6 @@ class CourseCreateAPIView(APIView):
         else:
             if serializer.is_valid():
                 course = serializer.save(tutor=tutor)
-                
-
                 return Response({"success":True,"message": "Course created successfully", "course": serializer.data}, status=status.HTTP_201_CREATED)
             else:
                 return Response({"success":False,"message": "Failed to create course", "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
