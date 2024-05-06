@@ -43,4 +43,4 @@ class MeetingApiView(APIView):
                 serializer.save()
                 return Response({"success":True,"message": "Meeting created successfully","data": serializer.data}, status=status.HTTP_201_CREATED)
             else:
-                return Response({"success":False,"error": "Unable to create meeting", "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"success":False,"message": "Unable to create meeting", "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
