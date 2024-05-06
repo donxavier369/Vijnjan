@@ -83,8 +83,10 @@ class CourseCreateAPIView(APIView):
     
 class AddModulesAPIView(APIView):
     permission_classes = [IsAuthenticated]
-    def post(self, request, format=None):
-        serializer = ModuleSerializer(data=request.data, many=True)
+    def post(self, request, course_id, format=None):
+        course_id = course_id
+        print(course_id, "course id")
+        serializer = ModuleSerializer(data=request.data, context={'course_id': course_id}, many=True)
         if serializer.is_valid():
             serializer.save()
             return Response({"success":True, "message": "Module added successfully", "data":serializer.data}, status=status.HTTP_201_CREATED)

@@ -4,12 +4,15 @@ from django.core.validators import MinValueValidator
 
 
 class ModuleSerializer(serializers.ModelSerializer):
-    course = serializers.PrimaryKeyRelatedField(queryset=Courses.objects.all())
-
     class Meta:
         model = Modules
-        fields = '__all__'  # Include all fields
+        exclude = ['course']  # Exclude course from fields
 
+    def create(self, validated_data):
+        course_id = self.context.get('course_id')
+        module = Modules(course_id=course_id, **validated_data)
+        module.save()
+        return module
 
 class CourseSerializer(serializers.ModelSerializer):
     category_name = serializers.SerializerMethodField()
