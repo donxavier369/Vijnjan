@@ -21,6 +21,6 @@ class Meetings(models.Model):
     course = models.ForeignKey(Courses, on_delete=models.CASCADE)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
     date = models.DateField(default=timezone.now)
     time = models.TimeField(auto_now=False, auto_now_add=False)
-    am_pm = models.CharField(max_length=2, choices=(("AM", "AM"), ("PM", "PM")), default="AM")
+    # am_pm = models.CharField(max_length=2, choices=(("AM", "AM"), ("PM", "PM")), default="AM")
     duration = models.IntegerField(default=0, validators=[validate_positive_duration])
     link = models.CharField(max_length=255)
