@@ -12,7 +12,7 @@ urlpatterns = [
     path('list-trending-courses/', views.TrendingCourseListAPIView.as_view(), name="list_trending_courses"),
     path('category_courses/', CategoryCourseListView.as_view(), name='category_courses'),
     path('add-files/', views.AddVideoPptAPI.as_view(), name="add-files"),
-    path('get-files/<int:tutor_id>/', views.GetFiles.as_view(), name='get-files'),
+    path('get-files/', views.GetFiles.as_view(), name='get-files'),
 ]
 
 

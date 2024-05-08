@@ -40,21 +40,12 @@ class AddVideoPptAPI(APIView):
             return Response({"success": False, "message":"fail to add files", "error": serializer.errors})
 
 class GetFiles(APIView):
-    def get(self, request, tutor_id):
-        try:
-            tutor = CustomUser.objects.get(id=tutor_id)
-        except CustomUser.DoesNotExist:
-            return Response({"success": False,"message": "Tutor does not exists", "data": serializer.data}, status=status.HTTP_404_NOT_FOUND)
-        if tutor.person != 'tutor':
-            return Response({"success":False,"message": "Given user is not a tutor"}, status=status.HTTP_400_BAD_REQUEST)
-        elif tutor.is_tutor_verify !=True:
-            return Response({"success":True,"message": "The tutor not verified by admin"}, status=status.HTTP_400_BAD_REQUEST)
-        else:
-            files = Files.objects.filter(tutor=tutor_id)
-            serializer = FileSerializer(instance=files, many=True)  
-            return Response({"success": True,"message":"files fetched successfully", "data": serializer.data})
-   
-    
+    def get(self, request):
+        files = Files.objects.all()
+        serializer = FileSerializer(instance=files, many=True)  
+        return Response({"success": True,"message":"files fetched successfully", "data": serializer.data})
+
+
 class CourseCreateAPIView(APIView):
     permission_classes = [IsAuthenticated]
     def post(self, request):
@@ -84,7 +75,19 @@ class AddModulesAPIView(APIView):
     def post(self, request, course_id, format=None):
         course_id = course_id
         print(course_id, "course id")
+        print(request.data,"requestttttttttttt")
+        print("tttttttttttttttttttttt")
+        modules_data = request.data.get('modules', [])  # Get the modules data from request
+        for module_str in modules_data:
+            print(module_str,"module str")
+            try:
+                module_obj = json.loads(module_str)  # Parse JSON string to Python object
+                # Now you can access properties of module_obj
+                print(module_obj,"dddd", module_obj.module_name)
+            except json.JSONDecodeError as e:
+                print(f"Error parsing JSON: {e}")
         serializer = ModuleSerializer(data=request.data, context={'course_id': course_id}, many=True)
+        # print(serializer,"serializer")
         if serializer.is_valid():
             serializer.save()
             return Response({"success":True, "message": "Module added successfully", "data":serializer.data}, status=status.HTTP_201_CREATED)

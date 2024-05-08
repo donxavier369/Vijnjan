@@ -47,7 +47,16 @@ class MeetingApiView(APIView):
 
 
 class MeetingListView(APIView):
-    def get(self, request):
-        meetings = Meetings.objects.all()
+    def get(self, request, course_id):
+        try:
+            course = Courses.objects.get(id=course_id)
+        except Courses.DoesNotExist:
+            return Response({"success": False, "message": "Course does not exist"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        meetings = Meetings.objects.filter(course=course)
         serializer = MeetingSerializer(instance=meetings, many=True)  
-        return Response({"success": False, "message": "meeting listed successfully", "data": serializer.data}, status=status.HTTP_200_OK)
+        
+        if meetings:
+            return Response({"success": True, "message": "Meetings listed successfully", "data": serializer.data}, status=status.HTTP_200_OK)
+        else:
+            return Response({"success": False, "message": "No meetings found"}, status=status.HTTP_404_NOT_FOUND)
