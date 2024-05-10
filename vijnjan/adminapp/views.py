@@ -116,10 +116,14 @@ class TrendingCourseUpdateView(APIView):
             except Courses.DoesNotExist:
                 return Response({"success":False,"message": "Course not found"}, status=status.HTTP_404_NOT_FOUND)
             
-            # Update the is_trending field based on the request data
-            is_trending = request.data.get('is_trending', False)
-            course.is_trending = is_trending
-            course.save()
+           
+            if course:
+                if course.is_trending:
+                    course.is_trending = False
+                    course.save()
+                else:
+                    course.is_trending = True
+                    course.save()
 
             # Serialize the updated course data
             serializer = CourseSerializer(course)

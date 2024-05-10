@@ -56,7 +56,5 @@ class MeetingListView(APIView):
         meetings = Meetings.objects.filter(course=course)
         serializer = MeetingSerializer(instance=meetings, many=True)  
         
-        if meetings:
-            return Response({"success": True, "message": "Meetings listed successfully", "data": serializer.data}, status=status.HTTP_200_OK)
-        else:
-            return Response({"success": False, "message": "No meetings found"}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"success": True, "message": "Meetings listed successfully", "data": serializer.data}, status=status.HTTP_200_OK)
+        
