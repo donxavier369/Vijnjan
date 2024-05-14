@@ -11,6 +11,7 @@ from .models import MODULE_TYPE_CHOICES
 from django.db import transaction
 import json
 from rest_framework.exceptions import AuthenticationFailed
+from collections import defaultdict
 
 
 
@@ -84,45 +85,6 @@ class CourseCreateAPIView(APIView):
             else:
                 return Response({"success": False, "message": "Course data is not valid", "error": course_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
-# class CourseCreateAPIView(APIView):
-#     permission_classes = [IsAuthenticated]
-#     def post(self, request):
-#         print(request.user.id)
-#         print(request.data)
-#         serializer = CourseSerializer(data=request.data)
-#         try:
-#             tutor = CustomUser.objects.get(id=request.user.id)
-#         except:
-#             return Response({'success':False,'message':'Tutor not found'}, status=status.HTTP_404_NOT_FOUND)
-#         if tutor.person != 'tutor':
-#             return Response({"success":False,"message": "Given user is not a tutor"}, status=status.HTTP_400_BAD_REQUEST)
-#         elif tutor.is_tutor_verify !=True:
-#             return Response({"success":True,"message": "The tutor not verified by admin"}, status=status.HTTP_400_BAD_REQUEST)
-#         else:
-#             if serializer.is_valid():
-#                 course = serializer.save(tutor=tutor)
-#                 return Response({"success":True,"message": "Course created successfully", "course": serializer.data}, status=status.HTTP_201_CREATED)
-#             else:
-#                 return Response({"success":False,"message": "Failed to create course", "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-
-
-
-    
-# class AddModulesAPIView(APIView):
-#     permission_classes = [IsAuthenticated]
-#     def post(self, request, course_id, format=None):
-#         course_id = course_id
-#         print(course_id, "course id")
-#         print(request.data,"requestttttttttttt")
-       
-        
-#         serializer = ModuleSerializer(data=request.data, context={'course_id': course_id}, many=True)
-#         # print(serializer,"serializer")
-#         if serializer.is_valid():
-#             serializer.save()
-#             return Response({"success":True, "message": "Module added successfully", "data":serializer.data}, status=status.HTTP_201_CREATED)
-#         return Response({"success": False, "message": "Unable to add modules", "error":serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-
 
 class CourseDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated]
@@ -149,7 +111,7 @@ class CourseDeleteAPIView(APIView):
         except Exception as e:
             return Response({"success": False, "message": f"Failed to delete course: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    
+
 class CourseListAPIView(APIView):
     def get(self, request):
         try:
@@ -159,14 +121,20 @@ class CourseListAPIView(APIView):
                 return Response({
                     "success": True,
                     "message": "No courses found",
-                    "courses": []
+                    "courses": {}
                 }, status=status.HTTP_200_OK)
             else:
-                serializer = CourseSerializer(courses, many=True)
+                # Group courses by category
+                courses_by_category = defaultdict(list)
+                for course in courses:
+                    category_name = course.category.category_name
+                    serializer = CourseSerializer(course)
+                    courses_by_category[category_name].append(serializer.data)
+
                 return Response({
                     "success": True,
                     "message": "Courses fetched successfully",
-                    "courses": serializer.data
+                    "courses": dict(courses_by_category)
                 }, status=status.HTTP_200_OK)
             
         except Exception as e:
@@ -174,6 +142,31 @@ class CourseListAPIView(APIView):
                 "success": False,
                 "message": f"Failed to fetch courses: {str(e)}"
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+          
+# class CourseListAPIView(APIView):
+#     def get(self, request):
+#         try:
+#             courses = Courses.objects.all()
+
+#             if not courses:
+#                 return Response({
+#                     "success": True,
+#                     "message": "No courses found",
+#                     "courses": []
+#                 }, status=status.HTTP_200_OK)
+#             else:
+#                 serializer = CourseSerializer(courses, many=True)
+#                 return Response({
+#                     "success": True,
+#                     "message": "Courses fetched successfully",
+#                     "courses": serializer.data
+#                 }, status=status.HTTP_200_OK)
+            
+#         except Exception as e:
+#             return Response({
+#                 "success": False,
+#                 "message": f"Failed to fetch courses: {str(e)}"
+#             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class ModuleListAPIView(APIView):
