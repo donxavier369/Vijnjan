@@ -130,6 +130,13 @@ class CourseListAPIView(APIView):
                     category_name = course.category.category_name
                     serializer = CourseSerializer(course)
                     courses_by_category[category_name].append(serializer.data)
+                
+                # Include categories with no courses
+                all_categories = Categories.objects.all()
+                for category in all_categories:
+                    category_name = category.category_name
+                    if category_name not in courses_by_category:
+                        courses_by_category[category_name] = []
 
                 return Response({
                     "success": True,
@@ -142,6 +149,7 @@ class CourseListAPIView(APIView):
                 "success": False,
                 "message": f"Failed to fetch courses: {str(e)}"
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
           
 # class CourseListAPIView(APIView):
 #     def get(self, request):

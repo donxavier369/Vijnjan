@@ -14,3 +14,5 @@ class CoursesAdmin(admin.ModelAdmin):
     inlines = [ModulesInline]
 
 admin.site.register(Modules)  # If you want to manage Modules separately in the admin
+
+admin.site.register(Categories)
