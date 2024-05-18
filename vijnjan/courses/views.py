@@ -15,30 +15,33 @@ from collections import defaultdict
 
 
 
-
 class AddVideoPptAPI(APIView):
     def post(self, request):
         serializer = FileSerializer(data=request.data)
-        # tutor_id = request.user.id
-        # tutor_from_data = request.data.get('tutor')
-        # print(tutor_from_data,"datttttttttt", tutor_id)
-        # if tutor_from_data is None:
-        #      return Response({"success": False, "message": "Tutor ID is missing from the request"}, status=status.HTTP_400_BAD_REQUEST)
-        # if tutor_id != int(tutor_from_data):
-        #     return Response({"success": False, "message":"Authentication credential and given tutor id do not match"}, status=status.HTTP_400_BAD_REQUEST)
-        # try:
-        #     tutor = CustomUser.objects.get(id=tutor_id)
-        # except CustomUser.DoesNotExist:
-        #     return Response({"success": False,"message": "Tutor does not exists", "data": serializer.data}, status=status.HTTP_404_NOT_FOUND)
-        # if tutor.person != 'tutor':
-        #     return Response({"success":False,"message": "Given user is not a tutor"}, status=status.HTTP_400_BAD_REQUEST)
-        # elif tutor.is_tutor_verify !=True:
-        #     return Response({"success":True,"message": "The tutor not verified by admin"}, status=status.HTTP_400_BAD_REQUEST)
-        if serializer.is_valid(): 
-            serializer.save()
-            return Response({"success": True,"message": "files added successfully", "data": serializer.data}, status=status.HTTP_201_CREATED)
+        if serializer.is_valid():
+            file_instance = serializer.save()
+
+            # Build the full URL for the video file
+            video_url = request.build_absolute_uri(file_instance.video.url) if file_instance.video else None
+            ppt_url = request.build_absolute_uri(file_instance.ppt.url) if file_instance.ppt else None
+            thumbnail_url = request.build_absolute_uri(file_instance.thumbnail.url) if file_instance.thumbnail else None
+
+            response_data = {
+                "success": True,
+                "message": "Files added successfully",
+                "data": {
+                    "id": file_instance.id,
+                    "thumbnail": thumbnail_url,
+                    "ppt": ppt_url,
+                    "video": video_url
+                }
+            }
+            return Response(response_data, status=status.HTTP_201_CREATED)
         else:
-            return Response({"success": False, "message":"fail to add files", "error": serializer.errors})
+            return Response({"success": False, "message": "Failed to add files", "error": serializer.errors})
+
+
+
 
 class GetFiles(APIView):
     def get(self, request):
@@ -100,8 +103,29 @@ class CourseDeleteAPIView(APIView):
 
         try:
             course = Courses.objects.get(pk=pk)
+            thumbnail_url = course.thumbnail
+
+            # Remove base URL to get the relative path
+            base_url = 'http://127.0.0.1:8000/media/'
+            relative_thumbnail_path = thumbnail_url.replace(base_url, '')
+
+            # Delete the corresponding file in the Files model
+            file_thumbnail = Files.objects.filter(thumbnail=relative_thumbnail_path)
+            file_thumbnail.delete()
+
             modules = Modules.objects.filter(course=course.id)
-            modules.delete()
+            for module in modules:
+                if module.module_content_video:
+                    video_path = module.module_content_video.replace(base_url, '')
+                    file_video = Files.objects.filter(video = video_path)
+                    file_video.delete()
+                if module.module_content_ppt:
+                    ppt_path = module.module_content_ppt.replace(base_url, '')
+                    file_ppt = Files.objects.filter(ppt = ppt_path)
+                    file_ppt.delete()
+                
+                
+            module.delete()
             course.delete()
             return Response({"success": True, "message": "Course deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
         except Courses.DoesNotExist:

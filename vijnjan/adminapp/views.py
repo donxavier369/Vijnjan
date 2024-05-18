@@ -13,6 +13,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import NotFound
 from django.contrib.auth.hashers import check_password
+# from ..courses.utils import generate_s3_url
 
 
 
@@ -97,7 +98,33 @@ class CarouselListView(APIView):
             return Response({"success":True,"message":"carousel listed successfully","data":serializer.data}, status=status.HTTP_200_OK)
         except:
             return Response({"success":False,"message":"internal server error"},status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+# class CarouselListView(APIView):
+#     def get(self, request):
+#         try:
+#             carousels = Carousel.objects.all()
+#             serializer = CarouselSerializer(carousels, many=True)
+            
+#             # Generate pre-signed URLs for each carousel image
+#             for carousel in serializer.data:
+#                 print("kkkkkkkk")
+#                 carousel['carousel_image_url'] = generate_s3_url(
+#                     bucket_name='vijnjan',
+#                     object_key=carousel['carousel_image']
+#                 )
+#                 print(carousel,"carrrrrrrrrr")
 
+#             return Response({
+#                 "success": True,
+#                 "message": "Carousel listed successfully",
+#                 "data": serializer.data
+#             }, status=status.HTTP_200_OK)
+#         except Exception as e:
+#             return Response({
+#                 "success": False,
+#                 "message": "Internal server error",
+#                 "error": str(e)
+#             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
 
 class TrendingCourseUpdateView(APIView):

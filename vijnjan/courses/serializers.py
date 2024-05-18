@@ -1,7 +1,9 @@
 from rest_framework import serializers
 from .models import Courses, Modules, Categories, Files
 from django.core.validators import MinValueValidator
-
+from .utils import ppt_to_pdf  
+import os
+from django.conf import settings
 
 class ModuleSerializer(serializers.ModelSerializer):
     class Meta:
@@ -51,3 +53,4 @@ class FileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Files
         fields = '__all__'
+
