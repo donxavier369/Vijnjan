@@ -24,6 +24,7 @@ class AddVideoPptAPI(APIView):
         serializer = FileSerializer(data=request.data)
         if serializer.is_valid():
             ppt_file = request.FILES.get('ppt')
+            pdf_url = None
             
             # Check if ppt_file is provided and valid
             if ppt_file:
