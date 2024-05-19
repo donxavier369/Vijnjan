@@ -67,7 +67,7 @@ class AddVideoPptAPI(APIView):
                 "id": file_instance.id,
                 "thumbnail": thumbnail_url,
                 "video": video_url,
-                "pdf": ppt_url  
+                "pdf": request.build_absolute_uri(pdf_url)
                
             }
             return Response({"success": True, "message": "File added successfully", "data":response_data}, status=status.HTTP_201_CREATED)
