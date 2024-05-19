@@ -1,27 +1,29 @@
-import boto3
 import os
-from pptx import Presentation
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import letter
-from django.conf import settings
-
-def generate_s3_url(bucket_name, object_key):
-    s3 = boto3.client('s3')
-    return s3.generate_presigned_url(
-        'get_object',
-        Params={'Bucket': bucket_name, 'Key': object_key}
-    )
+import subprocess
+from django.core.files.base import ContentFile
+import tempfile
 
 
-def ppt_to_pdf(ppt_path, pdf_path):
-    prs = Presentation(ppt_path)
-    c = canvas.Canvas(pdf_path, pagesize=letter)
-    width, height = letter
+def convert_ppt_to_pdf(ppt_file):
+    # Save the PPT file to a temporary location
+    temp_ppt_file = tempfile.NamedTemporaryFile(delete=False)
+    for chunk in ppt_file.chunks():
+        temp_ppt_file.write(chunk)
+    temp_ppt_file.close()
 
-    for slide in prs.slides:
-        # For simplicity, we just use the slide number as content here.
-        # You might want to render slide content using python-pptx or other libraries.
-        c.drawString(100, height - 100, f"Slide {prs.slides.index(slide) + 1}")
-        c.showPage()
+    # Convert PPT to PDF using LibreOffice
+    temp_pdf_file = tempfile.NamedTemporaryFile(suffix='.pdf', delete=False)
+    subprocess.run(['libreoffice', '--headless', '--convert-to', 'pdf', temp_ppt_file.name, '--outdir', os.path.dirname(temp_pdf_file.name)])
 
-    c.save()
+    # Read the converted PDF file
+    with open(temp_pdf_file.name, 'rb') as f:
+        pdf_content = f.read()
+
+    # Create a Django ContentFile from the PDF content
+    pdf_file = ContentFile(pdf_content, name=os.path.basename(temp_pdf_file.name))
+
+    # Clean up temporary files
+    os.remove(temp_ppt_file.name)
+    os.remove(temp_pdf_file.name)
+
+    return pdf_file

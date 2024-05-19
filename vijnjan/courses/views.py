@@ -12,6 +12,10 @@ from django.db import transaction
 import json
 from rest_framework.exceptions import AuthenticationFailed
 from collections import defaultdict
+from django.core.files.storage import FileSystemStorage
+import os
+from django.http import HttpResponse
+import subprocess
 
 
 
@@ -19,27 +23,56 @@ class AddVideoPptAPI(APIView):
     def post(self, request):
         serializer = FileSerializer(data=request.data)
         if serializer.is_valid():
-            file_instance = serializer.save()
+            ppt_file = request.FILES.get('ppt')
+            
+            # Check if ppt_file is provided and valid
+            if ppt_file:
+                valid_extensions = ['ppt', 'pptx']
+                if not ppt_file.name.lower().endswith(tuple(valid_extensions)):
+                    return Response({"success": False, "message": "Invalid file format. Only PPT and PPTX files are allowed."}, status=status.HTTP_400_BAD_REQUEST)
+                
+            fs = FileSystemStorage()
+            
+            # Save the ppt file if provided
+            if ppt_file:
+                filename = fs.save(ppt_file.name, ppt_file)
+                uploaded_file_path = fs.path(filename)
 
+                pdf_filename = f"{os.path.splitext(filename)[0]}.pdf"
+                pdf_file_path = os.path.join(fs.location, pdf_filename)
+
+                try:
+                    # Convert PPT to PDF using LibreOffice
+                    subprocess.run(['soffice', '--headless', '--convert-to', 'pdf', uploaded_file_path, '--outdir', fs.location], check=True)
+
+                    # Get the URL of the PDF file
+                    pdf_url = fs.url(pdf_filename)
+                    
+                    # Set the ppt file URL to pdf_url
+                    ppt_url = pdf_url
+                except subprocess.CalledProcessError as e:
+                    return Response({"success": False, "message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            else:
+                ppt_url = None
+
+            # Create the file instance
+            file_instance = serializer.save(ppt=ppt_url)
+            
             # Build the full URL for the video file
             video_url = request.build_absolute_uri(file_instance.video.url) if file_instance.video else None
-            ppt_url = request.build_absolute_uri(file_instance.ppt.url) if file_instance.ppt else None
             thumbnail_url = request.build_absolute_uri(file_instance.thumbnail.url) if file_instance.thumbnail else None
 
             response_data = {
-                "success": True,
-                "message": "Files added successfully",
-                "data": {
-                    "id": file_instance.id,
-                    "thumbnail": thumbnail_url,
-                    "ppt": ppt_url,
-                    "video": video_url
-                }
+                
+                "id": file_instance.id,
+                "thumbnail": thumbnail_url,
+                "video": video_url,
+                "pdf": ppt_url  
+               
             }
-            return Response(response_data, status=status.HTTP_201_CREATED)
+            return Response({"success": True, "message": "File added successfully", "data":response_data}, status=status.HTTP_201_CREATED)
         else:
-            return Response({"success": False, "message": "Failed to add files", "error": serializer.errors})
-
+            return Response({"success": False, "message": "Failed to add files", "error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
 
@@ -120,8 +153,9 @@ class CourseDeleteAPIView(APIView):
                     file_video = Files.objects.filter(video = video_path)
                     file_video.delete()
                 if module.module_content_ppt:
-                    ppt_path = module.module_content_ppt.replace(base_url, '')
-                    file_ppt = Files.objects.filter(ppt = ppt_path)
+                    base_url_pdf = 'http://127.0.0.1:8000'
+                    pdf_path = module.module_content_ppt.replace(base_url_pdf, '')
+                    file_ppt = Files.objects.filter(ppt = pdf_path)
                     file_ppt.delete()
                 
                 

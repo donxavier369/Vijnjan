@@ -23,7 +23,9 @@ from django.core.validators import validate_email
 from django.contrib.auth.hashers import check_password
 from vijnjan.settings import EMAIL_HOST_USER
 from rest_framework_simplejwt.exceptions import InvalidToken
-
+from django.core.files.storage import default_storage
+import mimetypes
+from PIL import Image
 
 
 # Create your views here.
@@ -241,15 +243,37 @@ class UserProfileUpdateView(APIView):
             return Response({"success": False, "message": "Failed to create category due to validation errors.", "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
+
+
 class AddCertificate(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
+        file = request.FILES.get('certificate')
+        if not file:
+            return Response({"success": False, "message": "No certificate file provided."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Check the file extension
+        if not file.name.lower().endswith('.pdf'):
+            return Response({"success": False, "message": "Invalid file format. Only PDF files are allowed."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Check the file content type
+        mime_type, _ = mimetypes.guess_type(file.name)
+        if mime_type != 'application/pdf':
+            return Response({"success": False, "message": "Invalid file type. Only PDF files are allowed."}, status=status.HTTP_400_BAD_REQUEST)
+
         serializer = TutorProfileSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
-            return Response({"success":True,"message":"Certificate added successfully","data":serializer.data},status=status.HTTP_201_CREATED)
-        return Response({"success":False,"message":"Failed to add certificate due to validation errors","errors":serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            tutor_profile = serializer.save()
+            certificate_url = request.build_absolute_uri(tutor_profile.certificate.url) if tutor_profile.certificate else None
+            response_data = {
+                "id": tutor_profile.id,
+                "qualification": tutor_profile.qualification,
+                "certificate": certificate_url
+            }
+            return Response({"success": True, "message": "Certificate added successfully", "data": response_data}, status=status.HTTP_201_CREATED)
+        return Response({"success": False, "message": "Failed to add certificate due to validation errors", "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
     
 
 class StudentProfileView(APIView):
@@ -422,25 +446,46 @@ class AddUserProfile(APIView):
 
     def post(self, request):
         user = request.user
-        data = request.data
-        profile_image = data.get('profile_image')
+        profile_image = request.FILES.get('profile_image')
 
         try:
-            queryset = CustomUser.objects.get(id=user.id)
+            custom_user = CustomUser.objects.get(id=user.id)
         except CustomUser.DoesNotExist:
-            return Response({'success':False,'message': 'User profile not found.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'success': False, 'message': 'User profile not found.'}, status=status.HTTP_404_NOT_FOUND)
 
-        if queryset and profile_image:
-            custom_user = queryset
+        if profile_image:
+            # Check the file extension
+            valid_extensions = ['jpg', 'jpeg', 'png', 'gif']
+            if not profile_image.name.lower().endswith(tuple(valid_extensions)):
+                return Response({"success": False, "message": "Invalid file format. Only image files are allowed."}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Check the file MIME type
+            mime_type, _ = mimetypes.guess_type(profile_image.name)
+            if not mime_type or not mime_type.startswith('image'):
+                return Response({"success": False, "message": "Invalid file type. Only image files are allowed."}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Validate the file content using Pillow
+            try:
+                img = Image.open(profile_image)
+                img.verify()  # Verify that it is, in fact, an image
+            except (IOError, SyntaxError) as e:
+                return Response({"success": False, "message": "Invalid image file."}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Save the profile image
             custom_user.profile_image = profile_image
             custom_user.save()
-            return Response({'success':True,'message':'Profile image added successfully.'}, status=status.HTTP_201_CREATED)
-        else:
-            if not queryset:
-                return Response({'success':False,'message': 'User profile not found '}, status=status.HTTP_400_BAD_REQUEST)
-            elif not profile_image:
-                return Response({'success':False,'message': 'Profile image not provided.'}, status=status.HTTP_400_BAD_REQUEST)
 
+            # Build the profile image URL
+            profile_image_url = request.build_absolute_uri(custom_user.profile_image.url) if custom_user.profile_image else None
+
+            # Return the response with the profile image URL
+            response_data = {
+                'id': custom_user.id,
+                'profile_image': profile_image_url,
+            }
+            return Response({'success': True, 'message': 'Profile image added successfully.', "data": response_data}, status=status.HTTP_201_CREATED)
+        else:
+            return Response({'success': False, 'message': 'Profile image not provided.'}, status=status.HTTP_400_BAD_REQUEST)
 class DeleteUserProfile(APIView):
     permission_classes = [IsAuthenticated]
 

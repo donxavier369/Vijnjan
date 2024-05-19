@@ -1,9 +1,10 @@
 from rest_framework import serializers
 from .models import Courses, Modules, Categories, Files
 from django.core.validators import MinValueValidator
-from .utils import ppt_to_pdf  
 import os
 from django.conf import settings
+from .utils import convert_ppt_to_pdf  
+
 
 class ModuleSerializer(serializers.ModelSerializer):
     class Meta:
@@ -54,3 +55,19 @@ class FileSerializer(serializers.ModelSerializer):
         model = Files
         fields = '__all__'
 
+
+# class FileSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Files
+#         fields = '__all__'
+
+#     def create(self, validated_data):
+#         print(self.context, "kkkkkkkkkkkk", validated_data)
+#         ppt_file = self.context['request'].FILES['ppt']
+#         print(ppt_file,"ppt fileeeeeee")
+#         pdf_file = convert_ppt_to_pdf(ppt_file)  # Convert PPT to PDF
+#         print(pdf_file,"pdfffffffffff")
+
+#         # Save the PDF file to the model
+#         validated_data['ppt'] = pdf_file
+#         return super().create(validated_data)
