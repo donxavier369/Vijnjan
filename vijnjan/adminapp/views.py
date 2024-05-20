@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from .models import Carousel, Notifications
-from .serializers import CarouselSerializer,ListNotificationSerializer,AdminSerializer
+from .serializers import CarouselSerializer, CarouselListSerializer, ListNotificationSerializer,AdminSerializer
 from django.shortcuts import get_object_or_404
 from courses.models import Courses, Categories
 from courses.serializers import CourseSerializer,CategorySerializer
@@ -13,7 +13,8 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import NotFound
 from django.contrib.auth.hashers import check_password
-# from ..courses.utils import generate_s3_url
+import mimetypes
+from PIL import Image
 
 
 
@@ -34,15 +35,16 @@ class AdminLoginView(APIView):
                 else:
                     serializer.is_valid(raise_exception=True)
                     user = serializer.validated_data['user']
+                    admin_data = AdminSerializer(user, context={'request': request}).data
 
                     refresh = RefreshToken.for_user(user)
-                    user_data = AdminSerializer(user).data
+
                     return Response({
                         'success': True,
                         'message':'Admin login successfully',
                         'refresh': str(refresh),
                         'access': str(refresh.access_token),
-                        'data' : user_data
+                        'data' : admin_data
                     }) 
     
             except CustomUser.DoesNotExist:
@@ -51,24 +53,61 @@ class AdminLoginView(APIView):
             return Response({'success':False,"message": "Email field is required"}, status=status.HTTP_400_BAD_REQUEST)
     
 
-
 class CarouselUploadView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
         serializer = CarouselSerializer(data=request.data)
+        carousel_image = request.data.get('carousel_image', None)
+        
+        if not carousel_image:
+            return Response({'success': False, 'message': 'carousel_image not found'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if carousel_image:
+            # Check the file extension
+            valid_extensions = ['jpg', 'jpeg', 'png', 'gif']
+            if not carousel_image.name.lower().endswith(tuple(valid_extensions)):
+                return Response({"success": False, "message": "Invalid file format. Only image files are allowed."}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Check the file MIME type
+            mime_type, _ = mimetypes.guess_type(carousel_image.name)
+            if not mime_type or not mime_type.startswith('image'):
+                return Response({"success": False, "message": "Invalid file type. Only image files are allowed."}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Validate the file content using Pillow
+            try:
+                img = Image.open(carousel_image)
+                img.verify()  # Verify that it is, in fact, an image
+            except (IOError, SyntaxError) as e:
+                return Response({"success": False, "message": "Invalid image file."}, status=status.HTTP_400_BAD_REQUEST)
+        
         try:
             admin = CustomUser.objects.get(id=request.user.id)
         except CustomUser.DoesNotExist:
-            return Response({'success':False,'message':'Admin not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'success': False, 'message': 'Admin not found'}, status=status.HTTP_404_NOT_FOUND)
+        
         if not admin.is_superuser:
-            return Response({"success":False,"message": "Given user is not an admin"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"success": False, "message": "Given user is not an admin"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if serializer.is_valid():    
+            carousel_instance = serializer.save()
+
+            carousel_image_url = request.build_absolute_uri(carousel_instance.carousel_image.url) if carousel_instance.carousel_image else None
+
+            return Response({
+                "success": True,
+                "message": "Carousel successfully added",
+                "data": {
+                    'id': carousel_instance.id,
+                    'profile_image': carousel_image_url,
+                }
+            }, status=status.HTTP_201_CREATED)
         else:
-            if serializer.is_valid():    
-                serializer.save()
-                return Response({"success":True,"message":"carousel successfully added","data":serializer.data}, status=status.HTTP_201_CREATED)
-            else:
-                return Response({"success":False,"message":"unable to add carousel","error":serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({
+                "success": False,
+                "message": "Unable to add carousel",
+                "error": serializer.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
 
 
 class CarouselDeleteView(APIView):
@@ -94,7 +133,7 @@ class CarouselListView(APIView):
     def get(self, request):
         try:
             carousels = Carousel.objects.all()
-            serializer = CarouselSerializer(carousels, many=True)
+            serializer = CarouselListSerializer(carousels, many=True, context = {'request': request})
             return Response({"success":True,"message":"carousel listed successfully","data":serializer.data}, status=status.HTTP_200_OK)
         except:
             return Response({"success":False,"message":"internal server error"},status=status.HTTP_500_INTERNAL_SERVER_ERROR)

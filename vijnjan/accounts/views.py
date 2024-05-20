@@ -117,13 +117,13 @@ class LoginView(APIView):
                 user = serializer.validated_data['user']
 
                 refresh = RefreshToken.for_user(user)
-                user_data = CustomUserSerializer(user).data
-                refresh = RefreshToken.for_user(user)
+                user_data = CustomUserSerializer(user, context={'request': request}).data
+
 
                 if user.person == 'tutor':
                     tutor_profiles = TutorProfile.objects.filter(tutor=user)
                     if tutor_profiles.exists():
-                        serializer_tutor = TutorProfileSerializer(tutor_profiles, many=True).data
+                        serializer_tutor = TutorProfileSerializer(tutor_profiles, many=True, context={'request': request}).data
                     else:
                         serializer_tutor = []
                     try:
@@ -290,7 +290,7 @@ class StudentProfileView(APIView):
         else:
             serializer_student = []
 
-        serializer_user = CustomUserSerializer(user).data
+        serializer_user = CustomUserSerializer(user, context = {'request': request}).data
 
         return Response({
             'success':True,
@@ -311,7 +311,7 @@ class TutorProfileView(APIView):
             return Response({'success': False, 'message': 'Tutor not found.'}, status=status.HTTP_400_BAD_REQUEST)
 
         if tutor_profiles.exists():
-            serializer_tutor = TutorProfileSerializer(tutor_profiles, many=True).data
+            serializer_tutor = TutorProfileSerializer(tutor_profiles, many=True, context={'request': request}).data
         else:
             serializer_tutor = []
 
@@ -321,14 +321,14 @@ class TutorProfileView(APIView):
         except Courses.DoesNotExist:
             serializer_courses = []
 
-        serializer_user = CustomUserSerializer(user).data
+        serializer_user = CustomUserSerializer(user, context={'request': request}).data
 
         return Response({
             'success': True,
             'message': 'Successfully fetched tutor details',
+            'profile': serializer_user,
             'qualifications': serializer_tutor,
             'courses': serializer_courses,
-            'user': serializer_user
         }, status=status.HTTP_200_OK)
 
 
@@ -348,7 +348,7 @@ class ProfileListView(APIView):
             is_tutor = user.person
             tutor_profiles = TutorProfile.objects.filter(tutor=user)
             if tutor_profiles.exists():
-                serializer_tutor = TutorProfileSerializer(tutor_profiles, many=True).data
+                serializer_tutor = TutorProfileSerializer(tutor_profiles, many=True, context={'request': request}).data
             else:
                 serializer_tutor = []
 
@@ -372,7 +372,7 @@ class ProfileListView(APIView):
             # Retrieve courses for each user
             
             # Serialize the user
-            serializer_user = CustomUserSerializer(user).data
+            serializer_user = CustomUserSerializer(user, context={'request': request}).data
             if user.person == 'tutor':
                 tutor_data.append({
                     **serializer_user,

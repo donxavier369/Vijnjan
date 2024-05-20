@@ -20,15 +20,29 @@ class RegisterSerializer(serializers.ModelSerializer):
 
 
 class CustomUserSerializer(serializers.ModelSerializer):
+    profile_image = serializers.SerializerMethodField()
     class Meta:
         model = CustomUser
         fields = ['id', 'username', 'email', 'profile_image', 'person', 'date_of_birth', 'gender', 'is_tutor_verify', 'is_active']
 
+    def get_profile_image(self, obj):
+        request = self.context.get('request')
+        if obj.profile_image:
+            return request.build_absolute_uri(obj.profile_image.url)
+        return None
+
 
 class TutorProfileSerializer(serializers.ModelSerializer):
+    certificate = serializers.SerializerMethodField()
     class Meta:
         model = TutorProfile
-        fields = ['tutor', 'qualification', 'certificate']  
+        fields = ['tutor', 'qualification', 'certificate'] 
+
+    def get_certificate(self, obj):
+        request = self.context.get('request')
+        if obj.certificate:
+            return request.build_absolute_uri(obj.certificate.url)
+        return None 
 
 class StudentProfileSerializer(serializers.ModelSerializer):
     class Meta:
