@@ -451,7 +451,7 @@ class AddUserProfile(APIView):
         try:
             custom_user = CustomUser.objects.get(id=user.id)
         except CustomUser.DoesNotExist:
-            return Response({'success': False, 'message': 'User profile not found.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'success': False, 'message': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
 
         if profile_image:
             # Check the file extension
@@ -485,7 +485,7 @@ class AddUserProfile(APIView):
             }
             return Response({'success': True, 'message': 'Profile image added successfully.', "data": response_data}, status=status.HTTP_201_CREATED)
         else:
-            return Response({'success': False, 'message': 'Profile image not provided.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'success': False, 'message': 'profile_image not provided.'}, status=status.HTTP_400_BAD_REQUEST)
 class DeleteUserProfile(APIView):
     permission_classes = [IsAuthenticated]
 
