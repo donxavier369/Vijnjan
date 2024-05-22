@@ -180,7 +180,7 @@ class CourseListAPIView(APIView):
                 return Response({
                     "success": True,
                     "message": "No courses found",
-                    "courses": {}
+                    "courses": []
                 }, status=status.HTTP_200_OK)
             else:
                 # Group courses by category
@@ -192,15 +192,18 @@ class CourseListAPIView(APIView):
                 
                 # Include categories with no courses
                 all_categories = Categories.objects.all()
+                response_data = []
                 for category in all_categories:
                     category_name = category.category_name
-                    if category_name not in courses_by_category:
-                        courses_by_category[category_name] = []
+                    response_data.append({
+                        "name": category_name,
+                        "data": courses_by_category.get(category_name, [])
+                    })
 
                 return Response({
                     "success": True,
                     "message": "Courses fetched successfully",
-                    "courses": dict(courses_by_category)
+                    "courses": response_data
                 }, status=status.HTTP_200_OK)
             
         except Exception as e:
@@ -208,6 +211,44 @@ class CourseListAPIView(APIView):
                 "success": False,
                 "message": f"Failed to fetch courses: {str(e)}"
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+# class CourseListAPIView(APIView):
+#     def get(self, request):
+#         try:
+#             courses = Courses.objects.all()
+
+#             if not courses:
+#                 return Response({
+#                     "success": True,
+#                     "message": "No courses found",
+#                     "courses": {}
+#                 }, status=status.HTTP_200_OK)
+#             else:
+#                 # Group courses by category
+#                 courses_by_category = defaultdict(list)
+#                 for course in courses:
+#                     category_name = course.category.category_name
+#                     serializer = CourseSerializer(course)
+#                     courses_by_category[category_name].append(serializer.data)
+                
+#                 # Include categories with no courses
+#                 all_categories = Categories.objects.all()
+#                 for category in all_categories:
+#                     category_name = category.category_name
+#                     if category_name not in courses_by_category:
+#                         courses_by_category[category_name] = []
+
+#                 return Response({
+#                     "success": True,
+#                     "message": "Courses fetched successfully",
+#                     "courses": dict(courses_by_category)
+#                 }, status=status.HTTP_200_OK)
+            
+#         except Exception as e:
+#             return Response({
+#                 "success": False,
+#                 "message": f"Failed to fetch courses: {str(e)}"
+#             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
           
 # class CourseListAPIView(APIView):
