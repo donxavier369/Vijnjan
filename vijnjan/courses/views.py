@@ -16,6 +16,8 @@ from django.core.files.storage import FileSystemStorage
 import os
 from django.http import HttpResponse
 import subprocess
+from django.db.models import Q
+
 
 
 
@@ -122,6 +124,16 @@ class CourseCreateAPIView(APIView):
             else:
                 return Response({"success": False, "message": "Course data is not valid", "error": course_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
+class CourseSearchAPIView(APIView):
+    def get(self, request):
+        query = request.data.get('search', '')
+        print(query)
+        if query:
+            courses = Courses.objects.filter(Q(name__icontains=query))
+            serializer = CourseSerializer(courses, many=True)
+            return Response({"success": True, "message": "Courses listed successfully", "data": serializer.data}, status=status.HTTP_200_OK)
+        else:
+            return Response({"success": False, "message": "No query parameter provided"}, status=status.HTTP_400_BAD_REQUEST)
 
 class CourseDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated]

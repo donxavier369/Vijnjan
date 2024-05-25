@@ -53,7 +53,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
     
-    # 'corsheaders',
+    'corsheaders',
     'accounts',
     'meetings',
     'courses',
@@ -61,16 +61,6 @@ INSTALLED_APPS = [
     
 ]
 
-# MIDDLEWARE = [
-#     'django.middleware.security.SecurityMiddleware',
-#     'corsheaders.middleware.CorsMiddleware', 
-#     'django.middleware.common.CommonMiddleware',
-#     'django.middleware.csrf.CsrfViewMiddleware',
-#     'django.contrib.sessions.middleware.SessionMiddleware',
-#     'django.contrib.auth.middleware.AuthenticationMiddleware',
-#     'django.contrib.messages.middleware.MessageMiddleware',
-#     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-# ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -83,7 +73,9 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-
+# CORS_ALLOWED_ORIGINS = [
+#     "https://bc72-117-195-221-12.ngrok-free.app",
+# ]
 
 ROOT_URLCONF = 'vijnjan.urls'
 
@@ -167,9 +159,10 @@ STATICFILES_DIRS=[
 #media files configurations
 
 MEDIA_URL = '/media/'
+MEDIA_ROOT = '/media/'
 # MEDIA_ROOT = BASE_DIR/'media'
 # MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-MEDIA_ROOT = '/var/www/media/'
+# MEDIA_ROOT = '/var/www/media/'
 
 
 # Default primary key field type
@@ -207,6 +200,13 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = config('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 
+
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+USE_X_FORWARDED_HOST = True
+SECURE_SSL_REDIRECT = False
+
 # AWS_ACCESS_KEY_ID = config('AWS_ACCESS_KEY_ID')
 # AWS_SECRET_ACCESS_KEY = config('AWS_SECRET_ACCESS_KEY')
 # AWS_STORAGE_BUCKET_NAME = config('AWS_STORAGE_BUCKET_NAME')
@@ -216,4 +216,3 @@ EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 # AWS_DEFAULT_ACL =  None
 # AWS_S3_VERIFY = True
 # DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-
