@@ -266,6 +266,11 @@ class AddCertificate(APIView):
         if serializer.is_valid():
             tutor_profile = serializer.save()
             certificate_url = request.build_absolute_uri(tutor_profile.certificate.url) if tutor_profile.certificate else None
+            if certificate_url is not None:
+                if certificate_url.startswith('http://'):
+                    certificate_url = certificate_url.replace('http://', 'https://')
+                elif not certificate_url.startswith('https://'):
+                    certificate_url = 'https://' + certificate_url
             response_data = {
                 "id": tutor_profile.id,
                 "qualification": tutor_profile.qualification,
@@ -477,7 +482,11 @@ class AddUserProfile(APIView):
 
             # Build the profile image URL
             profile_image_url = request.build_absolute_uri(custom_user.profile_image.url) if custom_user.profile_image else None
-
+            if profile_image_url is not None:
+                if profile_image_url.startswith('http://'):
+                    profile_image_url = profile_image_url.replace('http://', 'https://')
+                elif not profile_image_url.startswith('https://'):
+                    profile_image_url = 'https://' + profile_image_url
             # Return the response with the profile image URL
             response_data = {
                 'id': custom_user.id,
