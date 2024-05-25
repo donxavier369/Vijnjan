@@ -152,20 +152,77 @@ class CourseSearchAPIView(APIView):
         else:
             return Response({"success": False, "message": "No query parameter provided"}, status=status.HTTP_400_BAD_REQUEST)
 
+# class CourseDeleteAPIView(APIView):
+#     permission_classes = [IsAuthenticated]
+
+#     def delete(self, request, pk):
+#         try:
+#             admin = CustomUser.objects.get(id=request.user.id)
+#         except CustomUser.DoesNotExist:
+#             return Response({"success": False, "message": "Admin does not exist"}, status=status.HTTP_400_BAD_REQUEST)
+
+#         if not admin.is_superuser:
+#             return Response({"success": False, "message": "Provided user is not an admin"}, status=status.HTTP_400_BAD_REQUEST)
+
+#         try:
+#             course = Courses.objects.get(pk=pk)
+#             thumbnail_url = course.thumbnail
+
+#             # Remove base URL to get the relative path
+#             base_url = 'http://127.0.0.1:8000/media/'
+#             relative_thumbnail_path = thumbnail_url.replace(base_url, '')
+
+#             # Delete the corresponding file in the Files model
+#             file_thumbnail = Files.objects.filter(thumbnail=relative_thumbnail_path)
+#             file_thumbnail.delete()
+
+#             modules = Modules.objects.filter(course=course.id)
+#             for module in modules:
+#                 if module.module_content_video:
+#                     video_path = module.module_content_video.replace(base_url, '')
+#                     file_video = Files.objects.filter(video = video_path)
+#                     file_video.delete()
+#                 if module.module_content_ppt:
+#                     base_url_pdf = 'http://127.0.0.1:8000'
+#                     pdf_path = module.module_content_ppt.replace(base_url_pdf, '')
+#                     file_ppt = Files.objects.filter(ppt = pdf_path)
+#                     file_ppt.delete()
+                
+                
+#             module.delete()
+#             course.delete()
+#             return Response({"success": True, "message": "Course deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+#         except Courses.DoesNotExist:
+#             return Response({"success": False, "message": "Course does not exist"}, status=status.HTTP_404_NOT_FOUND)
+#         except AuthenticationFailed as e:
+#             return Response({"success": False, "message": f"Token is invalid or expired: {str(e.detail)}"}, status=status.HTTP_401_UNAUTHORIZED)
+#         except Exception as e:
+#             return Response({"success": False, "message": f"Failed to delete course: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 class CourseDeleteAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def delete(self, request, pk):
         try:
-            admin = CustomUser.objects.get(id=request.user.id)
+            user = CustomUser.objects.get(id=request.user.id)
         except CustomUser.DoesNotExist:
-            return Response({"success": False, "message": "Admin does not exist"}, status=status.HTTP_400_BAD_REQUEST)
-
-        if not admin.is_superuser:
-            return Response({"success": False, "message": "Provided user is not an admin"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"success": False, "message": "User does not exist"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             course = Courses.objects.get(pk=pk)
+        except Courses.DoesNotExist:
+            return Response({"success": False, "message": "Course does not exist"}, status=status.HTTP_404_NOT_FOUND)
+        
+        if not user.is_superuser and user.person != 'tutor':
+            return Response({"success": False, "message": "User is not authorized to delete this course"}, status=status.HTTP_403_FORBIDDEN)
+
+        print(course.tutor.id, "lllllll", user.id)
+        if course.tutor.id != user.id :
+            return Response({"success": False, "message":"This course is not created by the tutor"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+        try:
             thumbnail_url = course.thumbnail
 
             # Remove base URL to get the relative path
@@ -180,20 +237,18 @@ class CourseDeleteAPIView(APIView):
             for module in modules:
                 if module.module_content_video:
                     video_path = module.module_content_video.replace(base_url, '')
-                    file_video = Files.objects.filter(video = video_path)
+                    file_video = Files.objects.filter(video=video_path)
                     file_video.delete()
                 if module.module_content_ppt:
                     base_url_pdf = 'http://127.0.0.1:8000'
                     pdf_path = module.module_content_ppt.replace(base_url_pdf, '')
-                    file_ppt = Files.objects.filter(ppt = pdf_path)
+                    file_ppt = Files.objects.filter(ppt=pdf_path)
                     file_ppt.delete()
-                
-                
-            module.delete()
+
+                module.delete()
+
             course.delete()
             return Response({"success": True, "message": "Course deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
-        except Courses.DoesNotExist:
-            return Response({"success": False, "message": "Course does not exist"}, status=status.HTTP_404_NOT_FOUND)
         except AuthenticationFailed as e:
             return Response({"success": False, "message": f"Token is invalid or expired: {str(e.detail)}"}, status=status.HTTP_401_UNAUTHORIZED)
         except Exception as e:
@@ -240,70 +295,6 @@ class CourseListAPIView(APIView):
                 "success": False,
                 "message": f"Failed to fetch courses: {str(e)}"
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-# class CourseListAPIView(APIView):
-#     def get(self, request):
-#         try:
-#             courses = Courses.objects.all()
-
-#             if not courses:
-#                 return Response({
-#                     "success": True,
-#                     "message": "No courses found",
-#                     "courses": {}
-#                 }, status=status.HTTP_200_OK)
-#             else:
-#                 # Group courses by category
-#                 courses_by_category = defaultdict(list)
-#                 for course in courses:
-#                     category_name = course.category.category_name
-#                     serializer = CourseSerializer(course)
-#                     courses_by_category[category_name].append(serializer.data)
-                
-#                 # Include categories with no courses
-#                 all_categories = Categories.objects.all()
-#                 for category in all_categories:
-#                     category_name = category.category_name
-#                     if category_name not in courses_by_category:
-#                         courses_by_category[category_name] = []
-
-#                 return Response({
-#                     "success": True,
-#                     "message": "Courses fetched successfully",
-#                     "courses": dict(courses_by_category)
-#                 }, status=status.HTTP_200_OK)
-            
-#         except Exception as e:
-#             return Response({
-#                 "success": False,
-#                 "message": f"Failed to fetch courses: {str(e)}"
-#             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-          
-# class CourseListAPIView(APIView):
-#     def get(self, request):
-#         try:
-#             courses = Courses.objects.all()
-
-#             if not courses:
-#                 return Response({
-#                     "success": True,
-#                     "message": "No courses found",
-#                     "courses": []
-#                 }, status=status.HTTP_200_OK)
-#             else:
-#                 serializer = CourseSerializer(courses, many=True)
-#                 return Response({
-#                     "success": True,
-#                     "message": "Courses fetched successfully",
-#                     "courses": serializer.data
-#                 }, status=status.HTTP_200_OK)
-            
-#         except Exception as e:
-#             return Response({
-#                 "success": False,
-#                 "message": f"Failed to fetch courses: {str(e)}"
-#             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class ModuleListAPIView(APIView):
