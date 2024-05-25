@@ -63,14 +63,31 @@ class AddVideoPptAPI(APIView):
             
             # Build the full URL for the video file
             video_url = request.build_absolute_uri(file_instance.video.url) if file_instance.video else None
-            thumbnail_url = request.build_absolute_uri(file_instance.thumbnail.url) if file_instance.thumbnail else None
+            if video_url is not None:
+                if video_url.startswith('http://'):
+                    video_url = video_url.replace('http://', 'https://')
+                elif not video_url.startswith('https://'):
+                    video_url = 'https://' + video_url
 
+            thumbnail_url = request.build_absolute_uri(file_instance.thumbnail.url) if file_instance.thumbnail else None
+            if thumbnail_url is not None:
+                if thumbnail_url.startswith('http://'):
+                    thumbnail_url = thumbnail_url.replace('http://', 'https://')
+                elif not thumbnail_url.startswith('https://'):
+                    thumbnail_url = 'https://' + thumbnail_url
+            
+            pdf_url =request.build_absolute_uri(pdf_url) if pdf_url else None
+            if pdf_url is not None:
+                if pdf_url.startswith('http://'):
+                    pdf_url = pdf_url.replace('http://', 'https://')
+                elif not pdf_url.startswith('https://'):
+                    pdf_url = 'https://' + pdf_url
             response_data = {
                 
                 "id": file_instance.id,
                 "thumbnail": thumbnail_url,
                 "video": video_url,
-                "pdf": request.build_absolute_uri(pdf_url) if pdf_url else None
+                "pdf": pdf_url
                
             }
             return Response({"success": True, "message": "File added successfully", "data":response_data}, status=status.HTTP_201_CREATED)

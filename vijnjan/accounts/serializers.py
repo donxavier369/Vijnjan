@@ -28,7 +28,13 @@ class CustomUserSerializer(serializers.ModelSerializer):
     def get_profile_image(self, obj):
         request = self.context.get('request')
         if obj.profile_image:
-            return request.build_absolute_uri(obj.profile_image.url)
+            profile_image= request.build_absolute_uri(obj.profile_image.url)
+            if profile_image is not None:
+                if profile_image.startswith('http://'):
+                    profile_image = profile_image.replace('http://', 'https://')
+                elif not profile_image.startswith('https://'):
+                    profile_image = 'https://' + profile_image
+            return profile_image
         return None
 
 
@@ -41,7 +47,13 @@ class TutorProfileSerializer(serializers.ModelSerializer):
     def get_certificate(self, obj):
         request = self.context.get('request')
         if obj.certificate:
-            return request.build_absolute_uri(obj.certificate.url)
+            certificate= request.build_absolute_uri(obj.certificate.url)
+            if certificate is not None:
+                if certificate.startswith('http://'):
+                    certificate = certificate.replace('http://', 'https://')
+                elif not certificate.startswith('https://'):
+                    certificate = 'https://' + certificate
+            return certificate
         return None 
 
 class StudentProfileSerializer(serializers.ModelSerializer):

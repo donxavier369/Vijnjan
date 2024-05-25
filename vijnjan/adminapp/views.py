@@ -93,7 +93,11 @@ class CarouselUploadView(APIView):
             carousel_instance = serializer.save()
 
             carousel_image_url = request.build_absolute_uri(carousel_instance.carousel_image.url) if carousel_instance.carousel_image else None
-
+            if carousel_image_url is not None:
+                if carousel_image_url.startswith('http://'):
+                    carousel_image_url = carousel_image_url.replace('http://', 'https://')
+                elif not carousel_image_url.startswith('https://'):
+                    carousel_image_url = 'https://' + carousel_image_url
             return Response({
                 "success": True,
                 "message": "Carousel successfully added",

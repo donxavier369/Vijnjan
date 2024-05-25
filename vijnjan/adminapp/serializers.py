@@ -15,7 +15,13 @@ class AdminSerializer(serializers.ModelSerializer):
     def get_profile_image(self, obj):
         request = self.context.get('request')
         if obj.profile_image:
-            return request.build_absolute_uri(obj.profile_image.url)
+            profile_image= request.build_absolute_uri(obj.profile_image.url)
+            if profile_image is not None:
+                if profile_image.startswith('http://'):
+                    profile_image = profile_image.replace('http://', 'https://')
+                elif not profile_image.startswith('https://'):
+                    profile_image = 'https://' + profile_image
+            return profile_image
         return None
     
 class CarouselSerializer(serializers.ModelSerializer):
@@ -34,7 +40,13 @@ class CarouselListSerializer(serializers.ModelSerializer):
     def get_carousel_image(self, obj):
         request = self.context.get('request')
         if obj.carousel_image:
-            return request.build_absolute_uri(obj.carousel_image.url)
+            carousel_images= request.build_absolute_uri(obj.carousel_image.url)
+            if carousel_images is not None:
+                if carousel_images.startswith('http://'):
+                    carousel_images = carousel_images.replace('http://', 'https://')
+                elif not carousel_images.startswith('https://'):
+                    carousel_images = 'https://' + carousel_images
+            return carousel_images
         return None
 
     carousel_image = serializers.SerializerMethodField()
@@ -46,7 +58,13 @@ class CarouselListSerializer(serializers.ModelSerializer):
     def get_carousel_image(self, obj):
         request = self.context.get('request')
         if obj.carousel_image:
-            return request.build_absolute_uri(obj.carousel_image.url)
+            carousel_images= request.build_absolute_uri(obj.carousel_image.url)
+            if carousel_images is not None:
+                if carousel_images.startswith('http://'):
+                    carousel_images = carousel_images.replace('http://', 'https://')
+                elif not carousel_images.startswith('https://'):
+                    carousel_images = 'https://' + carousel_images
+            return carousel_images
         return None
 
 class ListNotificationSerializer(serializers.ModelSerializer):
