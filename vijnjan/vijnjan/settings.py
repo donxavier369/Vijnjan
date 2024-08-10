@@ -73,9 +73,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-# CORS_ALLOWED_ORIGINS = [
-#     "https://bc72-117-195-221-12.ngrok-free.app",
-# ]
+
 
 ROOT_URLCONF = 'vijnjan.urls'
 
@@ -94,6 +92,7 @@ TEMPLATES = [
         },
     },
 ]
+
 
 WSGI_APPLICATION = 'vijnjan.wsgi.application'
 
@@ -153,7 +152,7 @@ STATIC_ROOT=os.path.join(BASE_DIR,'staticfiles')
 
 
 STATICFILES_DIRS=[
-    os.path.join(BASE_DIR,'static')
+    os.path.join(BASE_DIR,'static'),
 ]
 
 #media files configurations
@@ -200,6 +199,13 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = config('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 
+
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.gmail.com'
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+# EMAIL_HOST_USER = 'pbsvijnjandev@gmail.com'
+# EMAIL_HOST_PASSWORD = 'zesdvnsnexxaxwxh'
 
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')

@@ -16,7 +16,7 @@ from accounts.models import CustomUser
 class GenerateMeetingLink(APIView):
     def get(self, request):
         try:
-            meeting_link = "https://fanzkart.shop/" + get_random_string(length=10)
+            meeting_link = "https://meet.jit.si/" + get_random_string(length=10)
             return Response({"success":True,"message": "Meeting link generated successfully", "link": meeting_link}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"success":False,"message": f"Failed to generate meeting link: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

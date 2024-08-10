@@ -128,7 +128,7 @@ class CarouselDeleteView(APIView):
             try:
                 carousel = Carousel.objects.get(id=id)
                 carousel.delete()
-                return Response({"success":True,"message":"carousel deleted successfully"},status=status.HTTP_204_NO_CONTENT)
+                return Response({"success":True,"message":"carousel deleted successfully"},status=status.HTTP_200_OK)
             except Carousel.DoesNotExist:
                 return Response({"success":False,"message":"carousel not found"}, status=status.HTTP_404_NOT_FOUND)
 

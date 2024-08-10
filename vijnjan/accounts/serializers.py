@@ -37,24 +37,30 @@ class CustomUserSerializer(serializers.ModelSerializer):
             return profile_image
         return None
 
-
 class TutorProfileSerializer(serializers.ModelSerializer):
-    certificate = serializers.SerializerMethodField()
+    certificate = serializers.FileField(use_url=True)
+
     class Meta:
         model = TutorProfile
-        fields = ['tutor', 'qualification', 'certificate'] 
+        fields = ['tutor', 'qualification', 'certificate']
 
-    def get_certificate(self, obj):
-        request = self.context.get('request')
-        if obj.certificate:
-            certificate= request.build_absolute_uri(obj.certificate.url)
-            if certificate is not None:
-                if certificate.startswith('http://'):
-                    certificate = certificate.replace('http://', 'https://')
-                elif not certificate.startswith('https://'):
-                    certificate = 'https://' + certificate
-            return certificate
-        return None 
+# class TutorProfileSerializer(serializers.ModelSerializer):
+#     certificate = serializers.SerializerMethodField()
+#     class Meta:
+#         model = TutorProfile
+#         fields = ['tutor', 'qualification', 'certificate'] 
+
+#     def get_certificate(self, obj):
+#         request = self.context.get('request')
+#         if obj.certificate:
+#             certificate= request.build_absolute_uri(obj.certificate.url)
+#             if certificate is not None:
+#                 if certificate.startswith('http://'):
+#                     certificate = certificate.replace('http://', 'https://')
+#                 elif not certificate.startswith('https://'):
+#                     certificate = 'https://' + certificate
+#             return certificate
+#         return None 
 
 class StudentProfileSerializer(serializers.ModelSerializer):
     class Meta:

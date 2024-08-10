@@ -22,7 +22,17 @@ from django.db.models import Q
 
 
 class AddVideoPptAPI(APIView):
+    permission_classes = [IsAuthenticated]
     def post(self, request):
+        try:
+            tutor = CustomUser.objects.get(id=request.user.id)
+        except CustomUser.DoesNotExist:
+            return Response({'success': False, 'message': 'Tutor not found'}, status=status.HTTP_404_NOT_FOUND)
+        if tutor.person != 'tutor':
+            return Response({"success": False, "message": "Given user is not a tutor"}, status=status.HTTP_400_BAD_REQUEST)
+        elif not tutor.is_tutor_verify:
+            return Response({"success": False, "message": "The tutor is not verified by admin"}, status=status.HTTP_400_BAD_REQUEST)
+        
         serializer = FileSerializer(data=request.data)
         if serializer.is_valid():
             ppt_file = request.FILES.get('ppt')
@@ -143,7 +153,7 @@ class CourseCreateAPIView(APIView):
 
 class CourseSearchAPIView(APIView):
     def get(self, request):
-        query = request.data.get('search', '')
+        query = request.query_params.get('search', '')
         print(query)
         if query:
             courses = Courses.objects.filter(Q(name__icontains=query))
@@ -151,7 +161,7 @@ class CourseSearchAPIView(APIView):
             return Response({"success": True, "message": "Courses listed successfully", "data": serializer.data}, status=status.HTTP_200_OK)
         else:
             return Response({"success": False, "message": "No query parameter provided"}, status=status.HTTP_400_BAD_REQUEST)
-
+        
 # class CourseDeleteAPIView(APIView):
 #     permission_classes = [IsAuthenticated]
 
@@ -217,16 +227,19 @@ class CourseDeleteAPIView(APIView):
         if not user.is_superuser and user.person != 'tutor':
             return Response({"success": False, "message": "User is not authorized to delete this course"}, status=status.HTTP_403_FORBIDDEN)
 
-        print(course.tutor.id, "lllllll", user.id)
-        if course.tutor.id != user.id :
-            return Response({"success": False, "message":"This course is not created by the tutor"}, status=status.HTTP_400_BAD_REQUEST)
+        print(course.tutor.is_superuser, "lllllll", user.id)
 
+        # Check if the tutor deleting the course is the one who created it
+        if not user.is_superuser and course.tutor.id != user.id:
+            return Response({"success": False, "message": "This course is not created by the tutor"}, status=status.HTTP_403_FORBIDDEN)
 
         try:
             thumbnail_url = course.thumbnail
 
             # Remove base URL to get the relative path
-            base_url = 'http://127.0.0.1:8000/media/'
+          
+            # base_url = 'https://pentova.live/media/'
+            base_url = 'https://django.premiumbs.org/media/'
             relative_thumbnail_path = thumbnail_url.replace(base_url, '')
 
             # Delete the corresponding file in the Files model
@@ -240,7 +253,8 @@ class CourseDeleteAPIView(APIView):
                     file_video = Files.objects.filter(video=video_path)
                     file_video.delete()
                 if module.module_content_ppt:
-                    base_url_pdf = 'http://127.0.0.1:8000'
+                    # base_url_pdf = 'http://127.0.0.1:8000'
+                    base_url_pdf = 'https://django.premiumbs.org'
                     pdf_path = module.module_content_ppt.replace(base_url_pdf, '')
                     file_ppt = Files.objects.filter(ppt=pdf_path)
                     file_ppt.delete()
@@ -248,54 +262,60 @@ class CourseDeleteAPIView(APIView):
                 module.delete()
 
             course.delete()
-            return Response({"success": True, "message": "Course deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+            return Response({"success": True, "message": "Course deleted successfully"}, status=status.HTTP_200_OK)
         except AuthenticationFailed as e:
             return Response({"success": False, "message": f"Token is invalid or expired: {str(e.detail)}"}, status=status.HTTP_401_UNAUTHORIZED)
         except Exception as e:
             return Response({"success": False, "message": f"Failed to delete course: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+
+
 class CourseListAPIView(APIView):
     def get(self, request):
         try:
-            courses = Courses.objects.all()
+            all_courses = Courses.objects.all()
+            trending_courses = all_courses.filter(is_trending=True)
+            non_trending_courses = all_courses.filter(is_trending=False)
 
-            if not courses:
-                return Response({
-                    "success": True,
-                    "message": "No courses found",
-                    "courses": []
-                }, status=status.HTTP_200_OK)
-            else:
-                # Group courses by category
-                courses_by_category = defaultdict(list)
-                for course in courses:
-                    category_name = course.category.category_name
-                    serializer = CourseSerializer(course)
-                    courses_by_category[category_name].append(serializer.data)
+            # Serialize trending courses
+            trending_serializer = CourseSerializer(trending_courses, many=True, context={'request': request})
+            trending_courses_data = trending_serializer.data
+
+            # Group non-trending courses by category
+            courses_by_category = defaultdict(list)
+            for course in non_trending_courses:
+                category_name = course.category.category_name
+                serializer = CourseSerializer(course, context={'request': request})
+                courses_by_category[category_name].append(serializer.data)
                 
-                # Include categories with no courses
-                all_categories = Categories.objects.all()
-                response_data = []
-                for category in all_categories:
-                    category_name = category.category_name
-                    response_data.append({
-                        "name": category_name,
-                        "data": courses_by_category.get(category_name, [])
-                    })
+            # Include categories with no courses
+            all_categories = Categories.objects.all()
+            response_data = []
+            for category in all_categories:
+                category_name = category.category_name
+                response_data.append({
+                    "name": category_name,
+                    "data": courses_by_category.get(category_name, [])
+                })
 
-                return Response({
-                    "success": True,
-                    "message": "Courses fetched successfully",
-                    "courses": response_data
-                }, status=status.HTTP_200_OK)
-            
+            # Insert trending courses at the top
+            response_data.insert(0, {
+                "name": "Trending Courses",
+                "data": trending_courses_data
+            })
+
+            return Response({
+                "success": True,
+                "message": "Courses fetched successfully",
+                "courses": response_data
+            }, status=status.HTTP_200_OK)
+        
         except Exception as e:
             return Response({
                 "success": False,
                 "message": f"Failed to fetch courses: {str(e)}"
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
 
 class ModuleListAPIView(APIView):
     permission_classes = [IsAuthenticated]

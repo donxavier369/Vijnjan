@@ -18,7 +18,7 @@ def validate_thumbnail_size(value):
 
 class Courses(models.Model):
     name = models.CharField(max_length=50)
-    description = models.CharField(max_length=255, default="description")
+    description = models.CharField(max_length=1000, default="description")
     thumbnail = models.CharField(null=False, blank=False)
     duration = models.IntegerField(default=1)
     tutor = models.ForeignKey('accounts.CustomUser', on_delete=models.CASCADE)
@@ -50,5 +50,5 @@ class Files(models.Model):
 
         if self.module_content_video:
             file_size = self.module_content_video.size
-            if file_size > 1024 * 1024 * 1024:  # 1 GB in bytes
-                raise ValidationError("Video file size cannot exceed 1 GB.")
+            if file_size > 100 * 1024 * 1024:  
+                raise ValidationError("Video file size cannot exceed 100 MB.")

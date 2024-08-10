@@ -143,6 +143,7 @@ class LoginView(APIView):
                     })
                     return Response({
                         'success': True,
+                        'person': 'tutor',
                         'message':"Tutor login successfully",
                         'refresh': str(refresh),
                         'access': str(refresh.access_token),
@@ -167,6 +168,7 @@ class LoginView(APIView):
                     })
                     return Response({
                         'success': True,
+                        'person': 'student',
                         'message':'Student login successfully',
                         'refresh': str(refresh),
                         'access': str(refresh.access_token),
@@ -243,8 +245,6 @@ class UserProfileUpdateView(APIView):
             return Response({"success": False, "message": "Failed to create category due to validation errors.", "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
-
-
 class AddCertificate(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -262,15 +262,17 @@ class AddCertificate(APIView):
         if mime_type != 'application/pdf':
             return Response({"success": False, "message": "Invalid file type. Only PDF files are allowed."}, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = TutorProfileSerializer(data=request.data)
+        data = request.data.copy()
+        data['tutor'] = request.user.id
+        data['certificate'] = file
+
+        serializer = TutorProfileSerializer(data=data)
         if serializer.is_valid():
             tutor_profile = serializer.save()
             certificate_url = request.build_absolute_uri(tutor_profile.certificate.url) if tutor_profile.certificate else None
-            if certificate_url is not None:
-                if certificate_url.startswith('http://'):
-                    certificate_url = certificate_url.replace('http://', 'https://')
-                elif not certificate_url.startswith('https://'):
-                    certificate_url = 'https://' + certificate_url
+            if certificate_url and certificate_url.startswith('http://'):
+                certificate_url = certificate_url.replace('http://', 'https://')
+            
             response_data = {
                 "id": tutor_profile.id,
                 "qualification": tutor_profile.qualification,
@@ -279,55 +281,113 @@ class AddCertificate(APIView):
             return Response({"success": True, "message": "Certificate added successfully", "data": response_data}, status=status.HTTP_201_CREATED)
         return Response({"success": False, "message": "Failed to add certificate due to validation errors", "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
-    
 
-class StudentProfileView(APIView):
-    def get(self, request, user_id):
-        user = get_object_or_404(CustomUser, id=user_id)
-        try:
-            student_profiles = StudentProfile.objects.filter(student=user)
-        except:
-            return Response({"success":False,'message': 'Student not found.'}, status=status.HTTP_400_BAD_REQUEST)
+# class AddCertificate(APIView):
+#     permission_classes = [IsAuthenticated]
 
+#     def post(self, request, *args, **kwargs):
+#         file = request.FILES.get('certificate')
+#         if not file:
+#             return Response({"success": False, "message": "No certificate file provided."}, status=status.HTTP_400_BAD_REQUEST)
+        
+#         # Check the file extension
+#         if not file.name.lower().endswith('.pdf'):
+#             return Response({"success": False, "message": "Invalid file format. Only PDF files are allowed."}, status=status.HTTP_400_BAD_REQUEST)
 
-        if student_profiles.exists():
-            serializer_student = StudentProfileSerializer(student_profiles, many=True).data
-        else:
-            serializer_student = []
+#         # Check the file content type
+#         mime_type, _ = mimetypes.guess_type(file.name)
+#         if mime_type != 'application/pdf':
+#             return Response({"success": False, "message": "Invalid file type. Only PDF files are allowed."}, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer_user = CustomUserSerializer(user, context = {'request': request}).data
-
-        return Response({
-            'success':True,
-            'message':"Successfully fetched student details",
-            'student': serializer_student,
-            'user': serializer_user
-        }, status=status.HTTP_200_OK)
+#         serializer = TutorProfileSerializer(data=request.data)
+#         if serializer.is_valid():
+#             tutor_profile = serializer.save()
+#             certificate_url = request.build_absolute_uri(tutor_profile.certificate.url) if tutor_profile.certificate else None
+#             if certificate_url is not None:
+#                 if certificate_url.startswith('http://'):
+#                     certificate_url = certificate_url.replace('http://', 'https://')
+#                 elif not certificate_url.startswith('https://'):
+#                     certificate_url = 'https://' + certificate_url
+            
+#             response_data = {
+#                 "id": tutor_profile.id,
+#                 "qualification": tutor_profile.qualification,
+#                 "certificate": certificate_url
+#             }
+#             return Response({"success": True, "message": "Certificate added successfully", "data": response_data}, status=status.HTTP_201_CREATED)
+#         return Response({"success": False, "message": "Failed to add certificate due to validation errors", "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
   
 
-class TutorProfileView(APIView):
+class StudentProfileView(APIView):
     def get(self, request, user_id):
-        user = get_object_or_404(CustomUser, id=user_id)
+        student_data = []
+        serializer_courses = []
 
         try:
-            tutor_profiles = TutorProfile.objects.filter(tutor=user)
-        except:
-            return Response({'success': False, 'message': 'Tutor not found.'}, status=status.HTTP_400_BAD_REQUEST)
+            user = CustomUser.objects.get(id=user_id)
+        except CustomUser.DoesNotExist:
+            return Response({"success":False, 'message': 'Student not found'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if user.person == 'tutor':
+            return Response({"success":False, "message": "This user is not a student"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        student_profiles = StudentProfile.objects.filter(student=user)
+        if student_profiles.exists():
+                serializer_student = StudentProfileSerializer(student_profiles, many=True).data
+                for student in serializer_student:
+                    courses_ids = student.get('courses')
+                    if courses_ids:
+                        print("Course IDs:", courses_ids)
+                        courses = Courses.objects.filter(id=courses_ids)
+                        try:
+                            serializer_courses = CourseSerializer(courses, many=True).data
+                            # Remove tutor details from each course
+                            for course in serializer_courses:
+                                if 'tutor' in course:
+                                    del course['tutor']
+                        except Courses.DoesNotExist:
+                            serializer_courses = []
 
+        else:
+            serializer_student = []
+
+        
+        serializer_user = CustomUserSerializer(user, context={'request': request}).data
+        student_data.append({
+                    **serializer_user,
+                    'courses': serializer_courses
+                })
+        return Response({"success": True, "message": "Student data fetched successfully", "student_profile":student_data}, status=status.HTTP_200_OK)
+
+
+  
+class TutorProfileView(APIView):
+    def get(self, request, user_id):
+        try:
+            user = CustomUser.objects.get(id=user_id)
+        except CustomUser.DoesNotExist:
+            return Response({"success": False, 'message': 'Tutor not found'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if user.person == 'student':
+            return Response({"success": False, "message": "This user is not a tutor"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        tutor_profiles = TutorProfile.objects.filter(tutor=user)
         if tutor_profiles.exists():
             serializer_tutor = TutorProfileSerializer(tutor_profiles, many=True, context={'request': request}).data
         else:
             serializer_tutor = []
-
-        try:
-            courses = Courses.objects.filter(tutor=user)
-            serializer_courses = CourseSerializer(courses, many=True).data
-        except Courses.DoesNotExist:
-            serializer_courses = []
+    
+        courses = Courses.objects.filter(tutor=user)
+        serializer_courses = CourseSerializer(courses, many=True, context={'request': request}).data
+        
+        # Remove tutor details from each course
+        for course in serializer_courses:
+            if 'tutor' in course:
+                del course['tutor']
 
         serializer_user = CustomUserSerializer(user, context={'request': request}).data
-
+        
         return Response({
             'success': True,
             'message': 'Successfully fetched tutor details',
@@ -335,7 +395,6 @@ class TutorProfileView(APIView):
             'qualifications': serializer_tutor,
             'courses': serializer_courses,
         }, status=status.HTTP_200_OK)
-
 
 
 
